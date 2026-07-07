@@ -3,7 +3,7 @@ import os
 
 def load_data(base_path):
     data = {}
-
+    
     files = {
         "training_data": "checkins_lessons_checkouts_training.csv",
         "student_meta": "student_metadata.csv",
@@ -15,11 +15,13 @@ def load_data(base_path):
         "constructs_test": "construct_experiments_input_test.csv",
         "subject_meta": "subject_metadata.csv"
     }
-
+    
     for key, file in files.items():
         path = os.path.join(base_path, file)
         if not os.path.exists(path):
-            raise FileNotFoundError(path)
-        data[key] = pd.read_csv(path)
-
+            print(f"Warning: {file} not found at {path}")
+            data[key] = pd.DataFrame()
+        else:
+            data[key] = pd.read_csv(path)
+    
     return data
