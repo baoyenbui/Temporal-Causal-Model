@@ -37,7 +37,7 @@ def plot_causal_graph(stable_edges: dict, output_path: str = "output/causal_grap
         G.add_edge(source, target, lag=int(lag), weight=freq)
     
     if len(G.nodes()) == 0:
-        print("[!] No stable edges to plot")
+        print("No stable edges to plot")
         return
     
     pos = nx.spring_layout(G, k=2, iterations=50)
@@ -66,11 +66,9 @@ def plot_causal_graph(stable_edges: dict, output_path: str = "output/causal_grap
 
 def main():
     raw_logs = clean_main_df.copy()
-    print(f"Raw logs: {len(raw_logs)} rows, {len(raw_logs.columns)} cols")
 
     layer1_builder = Layer1TemporalConstruction(window_size=10, step_size=5)
     layer1_df = layer1_builder.build_layer1(raw_logs)
-    print(f"Layer 1: {len(layer1_df)} windows")
 
     layer2_builder = Layer2StructureLearning(
         max_lag=2,
@@ -81,10 +79,8 @@ def main():
 
     agg_df = layer2_builder.aggregate_time_series(layer1_df)
     agg_df = layer2_builder.add_latent_proxies(agg_df)
-    print(f"Aggregated: {len(agg_df)} time buckets")
 
     X_scaled, feature_df = layer2_builder.prepare_timeseries_matrix(agg_df)
-    print(f"Features: {X_scaled.shape[1]} vars, {X_scaled.shape[0]} time points")
 
     stable_edges = layer2_builder.bootstrap_stability(feature_df)
     print(f"Stable edges: {len(stable_edges)}")
