@@ -7,6 +7,7 @@ from tigramite.pcmci import PCMCI
 from tigramite.independence_tests.parcorr import ParCorr
 from tigramite.data_processing import DataFrame
 
+
 class Layer1TemporalConstruction:
     def __init__(self, window_size: int = 15, step_size: int = 5):
         self.window_size = window_size
@@ -93,13 +94,11 @@ class Layer1TemporalConstruction:
 
 
 class Layer2StructureLearning:
-    def __init__(self, max_lag: int = 5, alpha: float = 0.05, bootstrap_runs: int = 100, bootstrap_threshold: float = 0.7):
+    def __init__(self, max_lag: int = 5, alpha: float = 0.05):
         self.max_lag = max_lag
         self.alpha = alpha
-        self.bootstrap_runs = bootstrap_runs
-        self.bootstrap_threshold = bootstrap_threshold
 
-    def aggregate_time_series(self, layer1_df: pd.DataFrame, bucket_size: int = 10000) -> pd.DataFrame:
+    def aggregate_time_series(self, layer1_df: pd.DataFrame, bucket_size: int = 5000) -> pd.DataFrame:
         layer1_df = layer1_df.copy()
         layer1_df = layer1_df.sort_values('step_index')
 
@@ -109,17 +108,22 @@ class Layer2StructureLearning:
             avg_success=('success_rate', 'mean'),
             avg_engagement=('engagement_proxy', 'mean'),
             avg_difficulty=('avg_difficulty', 'mean'),
-            total_windows=('step_index', 'count'),
-            avg_response_time=('avg_response_time', 'mean')
+            difficulty_std=('difficulty_std', 'mean'),
+            difficulty_range=('difficulty_range', 'mean'),
+            avg_response_time=('avg_response_time', 'mean'),
+            response_time_std=('response_time_std', 'mean'),
+            total_windows=('step_index', 'count')
         ).reset_index()
 
         agg_df['rolling_success_mean'] = agg_df['avg_success'].rolling(window=5, min_periods=1).mean()
         agg_df['rolling_success_std'] = agg_df['avg_success'].rolling(window=5, min_periods=1).std()
-        agg_df['rolling_engagement_trend'] = agg_df['avg_engagement'].rolling(window=5, min_periods=1).mean()
+        agg_df['success_trend'] = agg_df['avg_success'].diff().fillna(0)
+        agg_df['engagement_trend'] = agg_df['avg_engagement'].diff().fillna(0)
+        agg_df['difficulty_trend'] = agg_df['avg_difficulty'].diff().fillna(0)
 
         if 'cluster_id' in layer1_df.columns:
             cluster_dist = layer1_df.groupby(['time_bucket', 'cluster_id']).size().unstack(fill_value=0)
-            cluster_dist.columns = [f'cluster_{c}_ratio' for c in cluster_dist.columns]
+            cluster_dist.columns = [f'CTRL_cluster_{c}_ratio' for c in cluster_dist.columns]
             cluster_dist = cluster_dist.div(cluster_dist.sum(axis=1), axis=0).fillna(0)
             agg_df = agg_df.merge(cluster_dist, on='time_bucket', how='left')
 
@@ -128,8 +132,9 @@ class Layer2StructureLearning:
         return agg_df
 
     def prepare_timeseries_matrix(self, agg_df: pd.DataFrame) -> Tuple[np.ndarray, pd.DataFrame]:
-        exclude_cols = ['time_bucket', 'avg_engagement', 'engagement_trend']
-        feature_cols = [col for col in agg_df.columns if col not in exclude_cols]
+        exclude_cols = ['time_bucket']
+        feature_cols = [col for col in agg_df.columns 
+                        if not any(excl in col for excl in exclude_cols)]
         
         X = agg_df[feature_cols].values
         stds = np.std(X, axis=0)
@@ -142,22 +147,21 @@ class Layer2StructureLearning:
         
         return X_scaled, pd.DataFrame(X_scaled, columns=feature_cols)
 
-    def run_pcmci(self, feature_df: pd.DataFrame) -> Dict:
+    def run_pcmci(self, feature_df: pd.DataFrame) -> Tuple[Dict, np.ndarray, List[str]]:
         n_obs, n_features = feature_df.shape
         feature_names = feature_df.columns.tolist()
         max_lag_safe = max(1, min(self.max_lag, (n_obs // n_features) - 1))
 
         if max_lag_safe < 1 or n_obs < 20:
-            return {feature: [] for feature in feature_names}
+            return {feature: [] for feature in feature_names}, np.array([]), []
 
         dataframe = DataFrame(data=feature_df.values, var_names=feature_names)
-        cond_ind_test = ParCorr(significance='analytic')   # Đổi thành 'analytic'
+        cond_ind_test = ParCorr(significance='analytic')
 
         pcmci = PCMCI(dataframe=dataframe, cond_ind_test=cond_ind_test, verbosity=0)
         results = pcmci.run_pcmci(tau_max=max_lag_safe, pc_alpha=0.05)
 
         p_matrix = results['p_matrix']
-        val_matrix = results['val_matrix']
 
         causal_graph = {}
         for i, target in enumerate(feature_names):
@@ -173,34 +177,7 @@ class Layer2StructureLearning:
                             'lag': lag,
                             'p_value': p_val
                         })
-        return causal_graph
-
-    def bootstrap_stability(self, feature_df: pd.DataFrame) -> Dict:
-        edge_counts = {}
-        n_samples = len(feature_df)
-
-        for run in range(self.bootstrap_runs):
-            indices = np.random.choice(n_samples, size=n_samples, replace=True)
-            X_boot = feature_df.iloc[indices]
-
-            if len(X_boot) < self.max_lag + 10:
-                continue
-
-            causal_graph = self.run_pcmci(X_boot)
-
-            for target, sources in causal_graph.items():
-                for edge in sources:
-                    edge_key = f"{edge['source']}->{target}@lag{edge['lag']}"
-                    edge_counts[edge_key] = edge_counts.get(edge_key, 0) + 1
-
-        stable_edges = {}
-
-        for edge_key, count in edge_counts.items():
-            frequency = count / self.bootstrap_runs
-            if frequency >= self.bootstrap_threshold:
-                stable_edges[edge_key] = frequency
-
-        return stable_edges
+        return causal_graph, p_matrix, feature_names
 
     def add_latent_proxies(self, agg_df: pd.DataFrame) -> pd.DataFrame:
         agg_df['ability_proxy'] = agg_df['avg_success'] * agg_df['avg_engagement']
@@ -218,14 +195,14 @@ class Layer2StructureLearning:
 
         return agg_df
 
-    def build_layer2(self, layer1_df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict, Dict]:
+    def build_layer2(self, layer1_df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict]:
         agg_df = self.aggregate_time_series(layer1_df)
         agg_df = self.add_latent_proxies(agg_df)
         X_scaled, feature_df = self.prepare_timeseries_matrix(agg_df)
-        causal_graph = self.run_pcmci(feature_df)
-        stable_edges = self.bootstrap_stability(feature_df)
-
-        return agg_df, causal_graph, stable_edges
+        
+        causal_graph, _, _ = self.run_pcmci(feature_df)
+        
+        return agg_df, causal_graph
 
 
 def run_layer1_pipeline(
@@ -245,20 +222,16 @@ def run_layer1_pipeline(
 def run_layer2_pipeline(
     layer1_df: pd.DataFrame,
     max_lag: int = 5,
-    alpha: float = 0.05,
-    bootstrap_runs: int = 100,
-    bootstrap_threshold: float = 0.7
-) -> Tuple[pd.DataFrame, Dict, Dict]:
+    alpha: float = 0.05
+) -> Tuple[pd.DataFrame, Dict]:
     layer2_builder = Layer2StructureLearning(
         max_lag=max_lag,
-        alpha=alpha,
-        bootstrap_runs=bootstrap_runs,
-        bootstrap_threshold=bootstrap_threshold
+        alpha=alpha
     )
 
-    agg_df, causal_graph, stable_edges = layer2_builder.build_layer2(layer1_df)
+    agg_df, causal_graph = layer2_builder.build_layer2(layer1_df)
 
-    return agg_df, causal_graph, stable_edges
+    return agg_df, causal_graph
 
 
 def run_full_pipeline(
@@ -266,9 +239,7 @@ def run_full_pipeline(
     window_size: int = 15,
     step_size: int = 5,
     max_lag: int = 5,
-    alpha: float = 0.05,
-    bootstrap_runs: int = 100,
-    bootstrap_threshold: float = 0.7
+    alpha: float = 0.05
 ) -> Tuple[pd.DataFrame, pd.DataFrame, Dict]:
     layer1_df = run_layer1_pipeline(
         base_path=base_path,
@@ -276,12 +247,10 @@ def run_full_pipeline(
         step_size=step_size
     )
 
-    agg_df, causal_graph, stable_edges = run_layer2_pipeline(
+    agg_df, causal_graph = run_layer2_pipeline(
         layer1_df=layer1_df,
         max_lag=max_lag,
-        alpha=alpha,
-        bootstrap_runs=bootstrap_runs,
-        bootstrap_threshold=bootstrap_threshold
+        alpha=alpha
     )
 
-    return layer1_df, agg_df, stable_edges
+    return layer1_df, agg_df, causal_graph
