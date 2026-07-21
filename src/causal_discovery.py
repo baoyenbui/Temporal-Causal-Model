@@ -124,6 +124,19 @@ class Layer2StructureLearning:
             cluster_dist = layer1_df.groupby(['time_bucket', 'cluster_id']).size().unstack(fill_value=0)
             cluster_dist.columns = [f'CTRL_cluster_{c}_ratio' for c in cluster_dist.columns]
             cluster_dist = cluster_dist.div(cluster_dist.sum(axis=1), axis=0).fillna(0)
+
+            row_sums = cluster_dist.sum(axis=1)
+            print(f"CTRL_cluster_*_ratio row sums (compositional check): "
+                  f"min={row_sums.min():.6f}, max={row_sums.max():.6f}, mean={row_sums.mean():.6f}")
+
+            is_compositional = np.isclose(row_sums.min(), 1.0, atol=1e-6) and np.isclose(row_sums.max(), 1.0, atol=1e-6)
+            if is_compositional:
+                reference_col = cluster_dist.columns[0]
+                print(f"Confirmed compositional (rows sum to 1): dropping '{reference_col}' as reference "
+                      f"category, keeping {len(cluster_dist.columns) - 1} of {len(cluster_dist.columns)} "
+                      f"cluster ratio columns to avoid a built-in linear dependency among them")
+                cluster_dist = cluster_dist.drop(columns=[reference_col])
+
             agg_df = agg_df.merge(cluster_dist, on='time_bucket', how='left')
 
         agg_df = agg_df.fillna(0)
