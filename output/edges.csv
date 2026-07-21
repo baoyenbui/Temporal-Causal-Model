@@ -1,0 +1,17 @@
+source,target,lag,p_value,strength,plotted_in_causal_graph_png
+avg_difficulty,avg_success,1,0.0352,0.140,True
+avg_success,avg_difficulty,1,0.0325,-0.142,True
+CTRL_cluster_2_ratio,avg_difficulty,1,0.0213,0.154,True
+CTRL_cluster_2_ratio,avg_difficulty,2,0.0212,-0.154,True
+CTRL_cluster_3_ratio,avg_difficulty,1,0.0157,-0.161,True
+CTRL_cluster_3_ratio,avg_difficulty,2,0.0193,0.156,True
+avg_success,difficulty_std,1,0.0069,-0.180,True
+CTRL_cluster_1_ratio,difficulty_std,1,0.0096,-0.173,True
+difficulty_std,avg_response_time,2,0.0020,-0.205,True
+avg_success,CTRL_cluster_1_ratio,1,0.0286,0.146,True
+avg_success,CTRL_cluster_2_ratio,1,0.0482,-0.132,True
+avg_difficulty,CTRL_cluster_2_ratio,2,0.0022,-0.203,True
+CTRL_cluster_3_ratio,CTRL_cluster_2_ratio,2,0.0119,0.168,True
+avg_difficulty,CTRL_cluster_3_ratio,2,0.0135,0.164,True
+CTRL_cluster_2_ratio,CTRL_cluster_3_ratio,1,0.0000,0.295,False
+CTRL_cluster_2_ratio,CTRL_cluster_3_ratio,2,0.0093,-0.174,True
