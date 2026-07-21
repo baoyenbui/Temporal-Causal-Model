@@ -255,8 +255,11 @@ class Layer2StructureLearning:
 
         non_stationary_cols = self.check_stationarity(feature_df)
         if non_stationary_cols:
-            print(f"Differencing all features once because these are non-stationary: {non_stationary_cols}")
-            feature_df = feature_df.diff().dropna().reset_index(drop=True)
+            print(f"Differencing ONLY the non-stationary columns (selective, to avoid over-differencing "
+                  f"the already-stationary ones): {non_stationary_cols}")
+            feature_df = feature_df.copy()
+            feature_df[non_stationary_cols] = feature_df[non_stationary_cols].diff()
+            feature_df = feature_df.dropna().reset_index(drop=True)
 
         causal_graph, _, _ = self.run_pcmci(feature_df)
 
