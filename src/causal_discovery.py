@@ -205,7 +205,17 @@ class Layer2StructureLearning:
         p_matrix = results['p_matrix']
         val_matrix = results['val_matrix']
 
-        print(f"PCMCI n_obs={n_obs} (with large n, even a weak partial correlation can reach a tiny p-value; check 'strength' below, not just p)")
+        q_matrix = pcmci.get_corrected_pvalues(
+            p_matrix=p_matrix,
+            fdr_method='fdr_bh',
+            exclude_contemporaneous=True,
+            tau_min=0,
+            tau_max=max_lag_safe,
+        )
+
+        n_tests = n_features * (n_features - 1) * max_lag_safe
+        print(f"PCMCI n_obs={n_obs}, FDR (fdr_bh) correction applied over m={n_tests} lagged tests "
+              f"(with large n, even a weak partial correlation can reach a tiny p-value; check 'strength' below, not just p)")
 
         causal_graph = {}
         for i, target in enumerate(feature_names):
@@ -215,11 +225,13 @@ class Layer2StructureLearning:
                     continue
                 for lag in range(1, max_lag_safe + 1):
                     p_val = p_matrix[j, i, lag]
-                    if p_val < self.alpha:
+                    q_val = q_matrix[j, i, lag]
+                    if q_val < self.alpha:
                         causal_graph[target].append({
                             'source': source,
                             'lag': lag,
                             'p_value': p_val,
+                            'p_value_fdr': q_val,
                             'strength': val_matrix[j, i, lag]
                         })
         return causal_graph, p_matrix, feature_names
