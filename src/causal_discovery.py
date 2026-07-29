@@ -66,19 +66,36 @@ class Layer1TemporalConstruction:
     def extract_window_features(self, window_data: pd.DataFrame) -> Dict:
         features = {}
 
-        features['success_rate'] = (window_data['IsCorrect'] == 1).mean()
+        correct = (window_data['IsCorrect'] == 1).astype(float)
+        features['success_rate'] = correct.mean()
+
+        idx = np.arange(len(window_data))
+        if len(idx) > 1 and correct.std() > 1e-9:
+            slope = np.polyfit(idx, correct.values, 1)[0]
+        else:
+            slope = 0.0
+        features['success_trend'] = slope
 
         features['avg_difficulty'] = window_data['question_difficulty'].mean()
         features['difficulty_std'] = window_data['question_difficulty'].std()
+        features['difficulty_range'] = window_data['question_difficulty'].max() - window_data['question_difficulty'].min()
 
-        features['consecutive_correct_mean'] = window_data['consecutive_correct'].mean()
+        features['recent5_correct_rate'] = window_data['consecutive_correct'].mean()
+        features['max_streak'] = window_data['consecutive_correct'].max()
+
         features['attempts_mean'] = window_data['attempts_on_same_question'].mean()
+        features['attempts_max'] = window_data['attempts_on_same_question'].max()
+        features['pct_multi_attempt'] = (window_data['attempts_on_same_question'] > 1).mean()
 
         non_zero = window_data[window_data['time_delta'] > 0]
         if len(non_zero) > 5:
             features['avg_response_time'] = non_zero['time_delta'].mean()
+            features['response_time_std'] = non_zero['time_delta'].std()
+            features['median_response_time'] = non_zero['time_delta'].median()
         else:
             features['avg_response_time'] = 0.0
+            features['response_time_std'] = 0.0
+            features['median_response_time'] = 0.0
 
         return features
 
@@ -100,9 +117,12 @@ class Layer1TemporalConstruction:
 
 
 class Layer2StructureLearning:
-    def __init__(self, max_lag: int = 2, alpha: float = 0.05):
+    def __init__(self, max_lag: int = 2, alpha: float = 0.1, pc_alpha: float = 0.2, corr_threshold: float = 0.97, min_effect: float = 0.12):
         self.max_lag = max_lag
         self.alpha = alpha
+        self.pc_alpha = pc_alpha
+        self.corr_threshold = corr_threshold
+        self.min_effect = min_effect
 
     def aggregate_time_series(self, layer1_df: pd.DataFrame, bucket_freq: str = 'D') -> pd.DataFrame:
         layer1_df = layer1_df.copy()
@@ -112,11 +132,18 @@ class Layer2StructureLearning:
 
         agg_df = layer1_df.groupby('time_bucket').agg(
             avg_success=('success_rate', 'mean'),
+            success_trend=('success_trend', 'mean'),
             avg_difficulty=('avg_difficulty', 'mean'),
             difficulty_std=('difficulty_std', 'mean'),
-            consecutive_correct_mean=('consecutive_correct_mean', 'mean'),
+            difficulty_range=('difficulty_range', 'mean'),
+            recent5_correct_rate=('recent5_correct_rate', 'mean'),
+            max_streak=('max_streak', 'mean'),
             attempts_mean=('attempts_mean', 'mean'),
+            attempts_max=('attempts_max', 'mean'),
+            pct_multi_attempt=('pct_multi_attempt', 'mean'),
             avg_response_time=('avg_response_time', 'mean'),
+            response_time_std=('response_time_std', 'mean'),
+            median_response_time=('median_response_time', 'mean'),
             total_windows=('window_start_time', 'count')
         ).reset_index()
 
@@ -156,7 +183,7 @@ class Layer2StructureLearning:
 
         return feature_df.values, feature_df
 
-    def drop_redundant_features(self, feature_df: pd.DataFrame, corr_threshold: float = 0.9) -> pd.DataFrame:
+    def drop_redundant_features(self, feature_df: pd.DataFrame) -> pd.DataFrame:
         corr_matrix = feature_df.corr().abs()
         to_drop = set()
         cols = corr_matrix.columns.tolist()
@@ -165,9 +192,9 @@ class Layer2StructureLearning:
                 col_i, col_j = cols[i], cols[j]
                 if col_j in to_drop or col_i in to_drop:
                     continue
-                if corr_matrix.loc[col_i, col_j] > corr_threshold:
+                if corr_matrix.loc[col_i, col_j] > self.corr_threshold:
                     print(f"Dropping '{col_j}': contemporaneous correlation with '{col_i}' is "
-                          f"{corr_matrix.loc[col_i, col_j]:.3f} (> {corr_threshold}), likely a shared-definition redundancy")
+                          f"{corr_matrix.loc[col_i, col_j]:.3f} (> {self.corr_threshold}), likely a shared-definition redundancy")
                     to_drop.add(col_j)
         return feature_df.drop(columns=list(to_drop))
 
@@ -200,29 +227,113 @@ class Layer2StructureLearning:
         cond_ind_test = ParCorr(significance='analytic')
 
         pcmci = PCMCI(dataframe=dataframe, cond_ind_test=cond_ind_test, verbosity=0)
-        results = pcmci.run_pcmci(tau_max=max_lag_safe, pc_alpha=self.alpha)
+        results = pcmci.run_pcmci(tau_max=max_lag_safe, pc_alpha=self.pc_alpha, fdr_method='fdr_bh')
 
         p_matrix = results['p_matrix']
         val_matrix = results['val_matrix']
 
+        try:
+            q_matrix = pcmci.get_corrected_pvalues(p_matrix=p_matrix, tau_min=0, tau_max=max_lag_safe, fdr_method='fdr_bh')
+            print("Using PCMCI.get_corrected_pvalues (FDR-BH) restricted to tested links")
+        except Exception as e:
+            q_matrix = p_matrix
+            print(f"get_corrected_pvalues failed ({type(e).__name__}: {e}); falling back to uncorrected p_matrix")
+
         print(f"PCMCI n_obs={n_obs} (with large n, even a weak partial correlation can reach a tiny p-value; check 'strength' below, not just p)")
 
-        causal_graph = {}
+        causal_graph = {feature: [] for feature in feature_names}
         for i, target in enumerate(feature_names):
-            causal_graph[target] = []
             for j, source in enumerate(feature_names):
                 if i == j:
+                    continue
+                if source.startswith('CTRL_') and target.startswith('CTRL_'):
+                    continue
+                for lag in range(1, max_lag_safe + 1):
+                    q_val = q_matrix[j, i, lag]
+                    strength = val_matrix[j, i, lag]
+                    if q_val >= self.alpha:
+                        continue
+                    if abs(strength) < self.min_effect:
+                        continue
+                    causal_graph[target].append({
+                        'source': source,
+                        'lag': lag,
+                        'p_value': p_matrix[j, i, lag],
+                        'q_value': q_val,
+                        'strength': strength
+                    })
+
+        return causal_graph, p_matrix, feature_names
+
+    def run_pcmci_nonlinear(self, feature_df: pd.DataFrame) -> Dict:
+        from tigramite.independence_tests.cmiknn import CMIknn
+
+        n_obs, n_features = feature_df.shape
+        feature_names = feature_df.columns.tolist()
+
+        max_lag_safe = max(1, min(self.max_lag, n_obs // 8))
+
+        if max_lag_safe < 1 or n_obs < 15:
+            return {feature: [] for feature in feature_names}
+
+        dataframe = DataFrame(data=feature_df.values, var_names=feature_names)
+        cond_ind_test = CMIknn(significance='shuffle_test', knn=0.1, shuffle_neighbors=5, sig_samples=200)
+
+        pcmci = PCMCI(dataframe=dataframe, cond_ind_test=cond_ind_test, verbosity=0)
+        results = pcmci.run_pcmci(tau_max=max_lag_safe, pc_alpha=self.pc_alpha, fdr_method='fdr_bh')
+
+        p_matrix = results['p_matrix']
+        val_matrix = results['val_matrix']
+
+        print(f"CMIknn (non-linear) n_obs={n_obs}, comparing against ParCorr (linear) strengths below")
+
+        nonlinear_graph = {}
+        for i, target in enumerate(feature_names):
+            nonlinear_graph[target] = []
+            for j, source in enumerate(feature_names):
+                if i == j:
+                    continue
+                if source.startswith('CTRL_') and target.startswith('CTRL_'):
                     continue
                 for lag in range(1, max_lag_safe + 1):
                     p_val = p_matrix[j, i, lag]
                     if p_val < self.alpha:
-                        causal_graph[target].append({
+                        nonlinear_graph[target].append({
                             'source': source,
                             'lag': lag,
                             'p_value': p_val,
                             'strength': val_matrix[j, i, lag]
                         })
-        return causal_graph, p_matrix, feature_names
+        return nonlinear_graph
+
+    def compare_linear_nonlinear(self, layer1_df: pd.DataFrame) -> None:
+        agg_df = self.aggregate_time_series(layer1_df)
+        X_scaled, feature_df = self.prepare_timeseries_matrix(agg_df)
+
+        non_stationary_cols = self.check_stationarity(feature_df)
+        if non_stationary_cols:
+            feature_df = feature_df.copy()
+            feature_df[non_stationary_cols] = feature_df[non_stationary_cols].diff()
+            feature_df = feature_df.dropna().reset_index(drop=True)
+
+        linear_graph, _, _ = self.run_pcmci(feature_df)
+        nonlinear_graph = self.run_pcmci_nonlinear(feature_df)
+
+        print("\nComparison: linear (ParCorr) vs non-linear (CMIknn) strength per edge")
+        all_pairs = set()
+        for target, edges in linear_graph.items():
+            for e in edges:
+                all_pairs.add((e['source'], target, e['lag']))
+        for target, edges in nonlinear_graph.items():
+            for e in edges:
+                all_pairs.add((e['source'], target, e['lag']))
+
+        for source, target, lag in sorted(all_pairs):
+            lin = next((e for e in linear_graph.get(target, []) if e['source'] == source and e['lag'] == lag), None)
+            nonlin = next((e for e in nonlinear_graph.get(target, []) if e['source'] == source and e['lag'] == lag), None)
+            lin_str = f"r={lin['strength']:.3f}, p={lin['p_value']:.4f}" if lin else "not significant"
+            nonlin_str = f"CMI={nonlin['strength']:.3f}, p={nonlin['p_value']:.4f}" if nonlin else "not significant"
+            print(f"  {source} -> {target} @ lag {lag}: linear[{lin_str}] | nonlinear[{nonlin_str}]")
 
     def build_layer2(self, layer1_df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict]:
         agg_df = self.aggregate_time_series(layer1_df)
@@ -230,8 +341,10 @@ class Layer2StructureLearning:
 
         non_stationary_cols = self.check_stationarity(feature_df)
         if non_stationary_cols:
-            print(f"Differencing all features once because these are non-stationary: {non_stationary_cols}")
-            feature_df = feature_df.diff().dropna().reset_index(drop=True)
+            print(f"Differencing only these non-stationary features: {non_stationary_cols}")
+            feature_df = feature_df.copy()
+            feature_df[non_stationary_cols] = feature_df[non_stationary_cols].diff()
+            feature_df = feature_df.dropna().reset_index(drop=True)
 
         causal_graph, _, _ = self.run_pcmci(feature_df)
 
@@ -251,11 +364,17 @@ def run_layer1_pipeline(
 def run_layer2_pipeline(
     layer1_df: pd.DataFrame,
     max_lag: int = 2,
-    alpha: float = 0.05
+    alpha: float = 0.1,
+    pc_alpha: float = 0.2,
+    corr_threshold: float = 0.97,
+    min_effect: float = 0.12
 ) -> Tuple[pd.DataFrame, Dict]:
     layer2_builder = Layer2StructureLearning(
         max_lag=max_lag,
-        alpha=alpha
+        alpha=alpha,
+        pc_alpha=pc_alpha,
+        corr_threshold=corr_threshold,
+        min_effect=min_effect
     )
     agg_df, causal_graph = layer2_builder.build_layer2(layer1_df)
     return agg_df, causal_graph
@@ -266,7 +385,10 @@ def run_full_pipeline(
     window_size: int = 50,
     step_size: int = 50,
     max_lag: int = 2,
-    alpha: float = 0.05
+    alpha: float = 0.1,
+    pc_alpha: float = 0.2,
+    corr_threshold: float = 0.97,
+    min_effect: float = 0.12
 ) -> Tuple[pd.DataFrame, pd.DataFrame, Dict]:
     layer1_df = run_layer1_pipeline(
         raw_logs=raw_logs,
@@ -276,6 +398,9 @@ def run_full_pipeline(
     agg_df, causal_graph = run_layer2_pipeline(
         layer1_df=layer1_df,
         max_lag=max_lag,
-        alpha=alpha
+        alpha=alpha,
+        pc_alpha=pc_alpha,
+        corr_threshold=corr_threshold,
+        min_effect=min_effect
     )
     return layer1_df, agg_df, causal_graph
