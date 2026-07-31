@@ -15,9 +15,10 @@ except ImportError:
 
 
 class Layer1TemporalConstruction:
-    def __init__(self, window_size: int = 50, step_size: int = 50):
+    def __init__(self, window_size: int = 50, step_size: int = 50, max_response_time_seconds: float = 300.0):
         self.window_size = window_size
         self.step_size = step_size
+        self.max_response_time_seconds = max_response_time_seconds
         if self.step_size < self.window_size:
             overlap_ratio = 1.0 - (self.step_size / self.window_size)
             print(f"Warning: windows overlap by {overlap_ratio:.0%} (step_size={self.step_size} < window_size={self.window_size}). "
@@ -88,10 +89,11 @@ class Layer1TemporalConstruction:
         features['pct_multi_attempt'] = (window_data['attempts_on_same_question'] > 1).mean()
 
         non_zero = window_data[window_data['time_delta'] > 0]
-        if len(non_zero) > 5:
-            features['avg_response_time'] = non_zero['time_delta'].mean()
-            features['response_time_std'] = non_zero['time_delta'].std()
-            features['median_response_time'] = non_zero['time_delta'].median()
+        capped = non_zero[non_zero['time_delta'] <= self.max_response_time_seconds]
+        if len(capped) > 5:
+            features['avg_response_time'] = capped['time_delta'].mean()
+            features['response_time_std'] = capped['time_delta'].std()
+            features['median_response_time'] = capped['time_delta'].median()
         else:
             features['avg_response_time'] = 0.0
             features['response_time_std'] = 0.0

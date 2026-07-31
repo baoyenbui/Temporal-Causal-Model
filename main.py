@@ -13,6 +13,8 @@ warnings.filterwarnings('ignore')
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.causal_discovery import Layer1TemporalConstruction, Layer2StructureLearning
+from src.cf import Layer3CounterfactualExplanation
+from src.evaluation import run_full_evaluation
 
 clean_main_df: pd.DataFrame
 
@@ -126,7 +128,7 @@ def plot_causal_graph(causal_graph: dict, output_path: str = "output/causal_grap
 
 def main():
     raw_logs = clean_main_df.copy()
-    layer1_builder = Layer1TemporalConstruction(window_size=50, step_size=50)
+    layer1_builder = Layer1TemporalConstruction(window_size=50, step_size=50, max_response_time_seconds=300.0)
     layer1_df = layer1_builder.build_layer1(raw_logs)
     layer2_builder = Layer2StructureLearning(max_lag=2, alpha=0.1, pc_alpha=0.2, corr_threshold=0.97, min_effect=0.12)
     agg_df, causal_graph = layer2_builder.build_layer2(layer1_df)
@@ -136,7 +138,51 @@ def main():
         for edge in sources:
             print(f"  {edge['source']} -> {target} @ lag {edge['lag']}, p={edge['p_value']:.2e}, strength={abs(edge['strength']):.3f}")
     plot_causal_graph(causal_graph)
-    return layer1_df, agg_df, causal_graph
+
+    print("\n--- Layer 3: Counterfactual Explanation ---")
+    layer3 = Layer3CounterfactualExplanation(causal_graph=causal_graph, agg_df=agg_df)
+    actionable_vars = layer3.identify_actionable_variables()
+
+    cf_target = 'max_streak'
+    current_val = float(agg_df[cf_target].quantile(0.25))
+    cf_threshold = float(agg_df[cf_target].quantile(0.75))
+    cf_results = layer3.generate_counterfactual(
+        target=cf_target,
+        direction='increase',
+        threshold=cf_threshold,
+        current_value=current_val,
+        max_hops=2,
+        top_k=3
+    )
+
+    if cf_results:
+        print(f"\nCounterfactuals to push '{cf_target}' from {current_val:.3f} up to >= {cf_threshold:.3f}:")
+        for r in cf_results:
+            print(f"  Change '{r['source_variable']}' from {r['current_source_value']:.3f} to "
+                  f"{r['proposed_source_value']:.3f} (delta={r['delta']:+.3f}) via path [{r['causal_path']}], "
+                  f"lag={r['lag_days']}d")
+            print(f"    cf_score={r['cf_score']:.3f} | estimated_target_change={r['estimated_target_change']:+.3f} | "
+                  f"proximity={r['proximity']:.3f} | sparsity={r['sparsity']} | "
+                  f"stability={r['stability']:.3f} | flip_success_rate={r['flip_success_rate']:.3f} | "
+                  f"causal_plausibility={r['causal_plausibility']:.3f}")
+    else:
+        print(f"\nNo reliable counterfactuals found for '{cf_target}' after filtering out low-confidence "
+              f"and wrong-direction candidates.")
+
+    print("\n--- Layer 3: 5-Student Counterfactual Test ---")
+    student_cf_df = layer3.generate_student_counterfactuals(
+        layer1_df=layer1_df,
+        target=cf_target,
+        direction='increase',
+        n_users=5,
+        threshold_quantile=0.75
+    )
+    print(student_cf_df.to_string(index=False))
+
+    print("\n--- Evaluation ---")
+    evaluation_results = run_full_evaluation(layer1_df, agg_df, causal_graph)
+
+    return layer1_df, agg_df, causal_graph, cf_results, student_cf_df, evaluation_results
 
 
 if __name__ == "__main__":
