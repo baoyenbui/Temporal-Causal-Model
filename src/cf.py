@@ -47,7 +47,8 @@ class Layer3CounterfactualExplanation:
         non_actionable_features: Optional[List[str]] = None,
         lower_bound_quantile: float = 0.01,
         upper_bound_quantile: float = 0.99,
-        step_delta_quantile: float = 0.95
+        step_delta_quantile: float = 0.95,
+        recent_window: int = 7
     ):
         self.causal_graph = causal_graph
         self.agg_df = agg_df
@@ -56,6 +57,7 @@ class Layer3CounterfactualExplanation:
         self.lower_bound_quantile = lower_bound_quantile
         self.upper_bound_quantile = upper_bound_quantile
         self.step_delta_quantile = step_delta_quantile
+        self.recent_window = recent_window
         self.dag = self._build_dag()
 
     @staticmethod
@@ -101,6 +103,12 @@ class Layer3CounterfactualExplanation:
             print(f"Layer 3 actionable variables: {candidates}")
             print(f"Layer 3 excluded (control / pure-consequence / non-actionable): {excluded}")
         return candidates
+
+    def get_current_state(self, feature: str) -> float:
+        recent = self.agg_df[feature].tail(self.recent_window).dropna()
+        if len(recent) == 0:
+            return float(self.agg_df[feature].iloc[-1])
+        return float(recent.median())
 
     def get_valid_range(self, feature: str) -> Tuple[float, float]:
         series = self.agg_df[feature].dropna()
@@ -260,7 +268,7 @@ class Layer3CounterfactualExplanation:
     def _resolve_intervention(self, source: str, required_delta: float, direction_sign: float) -> Optional[Dict]:
         lo, hi = self.get_valid_range(source)
         max_step = self.get_max_step_delta(source)
-        source_current = float(self.agg_df[source].iloc[-1])
+        source_current = self.get_current_state(source)
 
         if not (lo <= source_current <= hi):
             print(f"Skipping path via '{source}': current value {source_current:.3f} is already outside "
@@ -309,7 +317,7 @@ class Layer3CounterfactualExplanation:
             return []
 
         if current_value is None:
-            current_value = float(self.agg_df[target].iloc[-1])
+            current_value = self.get_current_state(target)
 
         gap = threshold - current_value
         direction_sign = 1.0 if direction == 'increase' else -1.0
@@ -390,14 +398,20 @@ class Layer3CounterfactualExplanation:
         n_users: int = 5,
         threshold_quantile: float = 0.75,
         selection: str = 'lowest',
-        max_hops: int = 2
+        max_hops: int = 2,
+        realistic_step: bool = True
     ) -> pd.DataFrame:
         target_col = self._layer1_col(target)
         if target_col not in layer1_df.columns:
             raise ValueError(f"'{target}' (layer1 column '{target_col}') not found in layer1_df")
 
         user_stats = layer1_df.groupby('user_id')[target_col].mean().rename('current_value').reset_index()
-        threshold = float(layer1_df[target_col].quantile(threshold_quantile))
+        class_threshold = float(layer1_df[target_col].quantile(threshold_quantile))
+        n_degenerate = int((user_stats['current_value'] == 0.0).sum())
+        if n_degenerate > 0 and selection == 'lowest':
+            print(f"Excluding {n_degenerate} student(s) with current_value exactly 0.0 for '{target}' "
+                  f"(this is Layer 1's data-sparsity fallback, not a genuine low value) before picking the lowest performers")
+            user_stats = user_stats[user_stats['current_value'] != 0.0]
         user_stats = user_stats.sort_values('current_value', ascending=(selection == 'lowest'))
         selected_users = user_stats.head(n_users)
 
@@ -405,14 +419,23 @@ class Layer3CounterfactualExplanation:
         paths = self.get_valid_causal_paths(target, actionable_vars, max_hops=max_hops)
         direction_sign = 1.0 if direction == 'increase' else -1.0
 
-        print(f"Selected {len(selected_users)} students (lowest '{target}') to test counterfactual push toward "
-              f"class threshold={threshold:.3f}")
+        if realistic_step:
+            step = self.get_max_step_delta_from_windows(layer1_df, target_col)
+            if not np.isfinite(step) or step <= 0:
+                step = float(layer1_df[target_col].std())
+            print(f"Selected {len(selected_users)} students (lowest '{target}') to test a realistic "
+                  f"single-step improvement of about {step:.3f} (typical day-to-day movement of '{target}')")
+        else:
+            print(f"Selected {len(selected_users)} students (lowest '{target}') to test counterfactual push toward "
+                  f"class threshold={class_threshold:.3f}")
 
         rows = []
         for _, urow in selected_users.iterrows():
             user_id = urow['user_id']
             current_value = float(urow['current_value'])
             user_windows = layer1_df[layer1_df['user_id'] == user_id].sort_values('window_start_time')
+
+            threshold = current_value + direction_sign * step if realistic_step else class_threshold
 
             gap = threshold - current_value
             goal_met = (direction == 'increase' and gap <= 0) or (direction == 'decrease' and gap >= 0)
@@ -436,7 +459,8 @@ class Layer3CounterfactualExplanation:
                 if source_col not in user_windows.columns:
                     continue
 
-                source_current = float(user_windows[source_col].iloc[-1])
+                source_current_series = user_windows[source_col].tail(self.recent_window).dropna()
+                source_current = float(source_current_series.median()) if len(source_current_series) > 0 else float(user_windows[source_col].iloc[-1])
                 lo, hi = self.get_valid_range_from_windows(layer1_df, source_col)
                 max_step = self.get_max_step_delta_from_windows(layer1_df, source_col)
 

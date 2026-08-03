@@ -143,9 +143,12 @@ def main():
     layer3 = Layer3CounterfactualExplanation(causal_graph=causal_graph, agg_df=agg_df)
     actionable_vars = layer3.identify_actionable_variables()
 
-    cf_target = 'max_streak'
-    current_val = float(agg_df[cf_target].quantile(0.25))
-    cf_threshold = float(agg_df[cf_target].quantile(0.75))
+    cf_target = 'avg_response_time'
+    current_val = layer3.get_current_state(cf_target)
+    target_step = layer3.get_max_step_delta(cf_target)
+    if not np.isfinite(target_step) or target_step <= 0:
+        target_step = float(agg_df[cf_target].std())
+    cf_threshold = current_val + target_step
     cf_results = layer3.generate_counterfactual(
         target=cf_target,
         direction='increase',
