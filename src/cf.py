@@ -3,7 +3,6 @@ import pandas as pd
 import networkx as nx
 from typing import List, Dict, Tuple, Optional
 
-
 RAW_COLUMN_MAP = {
     'avg_difficulty': 'question_difficulty',
     'difficulty_std': 'question_difficulty',
@@ -24,18 +23,22 @@ LAYER1_TO_GRAPH_FEATURE = {'success_rate': 'avg_success'}
 GRAPH_FEATURE_TO_LAYER1 = {v: k for k, v in LAYER1_TO_GRAPH_FEATURE.items()}
 
 DEFAULT_NON_ACTIONABLE = {
-    'avg_success', 'success_trend', 'recent5_correct_rate', 'max_streak', 'attempts_max'
+    'avg_success', 'success_trend', 'recent5_correct_rate', 'max_streak',
+    'attempts_max', 'median_response_time',
+    'difficulty_std', 'difficulty_range'
 }
 
 DEFAULT_CF_SCORE_WEIGHTS = {
-    'proximity': 0.20,
-    'sparsity': 0.20,
+    'proximity': 0.15,
+    'sparsity': 0.15,
     'stability': 0.20,
     'flip_success_rate': 0.25,
-    'causal_plausibility': 0.15
+    'causal_plausibility': 0.15,
+    'improvement_ratio': 0.10
 }
 
-MIN_RELIABLE_FLIP_RATE = 0.10
+MIN_RELIABLE_FLIP_RATE = 0.05
+MIN_PATH_STRENGTH = 0.15
 
 
 class Layer3CounterfactualExplanation:
@@ -64,6 +67,12 @@ class Layer3CounterfactualExplanation:
     def _layer1_col(feature: str) -> str:
         return GRAPH_FEATURE_TO_LAYER1.get(feature, feature)
 
+    def get_current_state(self, feature: str) -> float:
+        recent = self.agg_df[feature].tail(self.recent_window).dropna()
+        if len(recent) == 0:
+            return float(self.agg_df[feature].iloc[-1])
+        return float(recent.median())
+
     def _build_dag(self) -> nx.DiGraph:
         G = nx.DiGraph()
         for target, edges in self.causal_graph.items():
@@ -83,7 +92,7 @@ class Layer3CounterfactualExplanation:
                     G.add_edge(source, target, lag=lag, strength=strength, p_value=p_value)
         return G
 
-    def identify_actionable_variables(self, verbose: bool = True) -> List[str]:
+    def identify_actionable_variables(self, verbose: bool = False) -> List[str]:
         all_nodes = set(self.dag.nodes())
         control_vars = {n for n in all_nodes if n.startswith('CTRL_')}
         sinks = {n for n in all_nodes if self.dag.out_degree(n) == 0}
@@ -96,19 +105,7 @@ class Layer3CounterfactualExplanation:
         candidates -= control_vars
         candidates -= sinks
         candidates -= self.non_actionable_features
-
-        candidates = sorted(candidates)
-        excluded = sorted(all_nodes - set(candidates))
-        if verbose:
-            print(f"Layer 3 actionable variables: {candidates}")
-            print(f"Layer 3 excluded (control / pure-consequence / non-actionable): {excluded}")
-        return candidates
-
-    def get_current_state(self, feature: str) -> float:
-        recent = self.agg_df[feature].tail(self.recent_window).dropna()
-        if len(recent) == 0:
-            return float(self.agg_df[feature].iloc[-1])
-        return float(recent.median())
+        return sorted(candidates)
 
     def get_valid_range(self, feature: str) -> Tuple[float, float]:
         series = self.agg_df[feature].dropna()
@@ -137,7 +134,7 @@ class Layer3CounterfactualExplanation:
         step = float(diffs.quantile(self.step_delta_quantile))
         return step if step > 0 else float('inf')
 
-    def raw_effect(self, path: List[str], standardized_effect: float, source: str, target: str) -> float:
+    def raw_effect(self, standardized_effect: float, source: str, target: str) -> float:
         std_source = float(self.agg_df[source].std())
         std_target = float(self.agg_df[target].std())
         if std_source <= 1e-9:
@@ -157,12 +154,14 @@ class Layer3CounterfactualExplanation:
         proximity = metrics['proximity']
         proximity_score = 1.0 / (1.0 + proximity) if np.isfinite(proximity) else 0.0
         sparsity_score = 1.0 / max(metrics['sparsity'], 1)
+        improvement = metrics.get('improvement_ratio', 0.0)
         score = (
             w['proximity'] * proximity_score +
             w['sparsity'] * sparsity_score +
             w['stability'] * metrics['stability'] +
             w['flip_success_rate'] * metrics['flip_success_rate'] +
-            w['causal_plausibility'] * metrics['causal_plausibility']
+            w['causal_plausibility'] * metrics['causal_plausibility'] +
+            w.get('improvement_ratio', 0.0) * min(improvement, 1.0)
         )
         return float(np.clip(score, 0.0, 1.0))
 
@@ -180,7 +179,9 @@ class Layer3CounterfactualExplanation:
                     edge = self.dag[u][v]
                     cumulative_lag += edge['lag']
                     cumulative_strength *= edge['strength']
-                raw_estimated_effect = self.raw_effect(path, cumulative_strength, var, target)
+                if abs(cumulative_strength) < MIN_PATH_STRENGTH:
+                    continue
+                raw_estimated_effect = self.raw_effect(cumulative_strength, var, target)
                 paths.append({
                     'source': var,
                     'path': path,
@@ -235,7 +236,6 @@ class Layer3CounterfactualExplanation:
         seed: int = 42
     ) -> Dict:
         sparsity = 1
-
         proximity = abs(delta) / source_std if source_std and source_std > 0 else float('nan')
 
         if np.isfinite(source_max_step) and source_max_step > 0:
@@ -257,48 +257,137 @@ class Layer3CounterfactualExplanation:
         expected_move = abs(delta * estimated_effect) + 1e-6
         stability = float(np.clip(1.0 - outcome_spread / expected_move, 0.0, 1.0))
 
+        gap = abs(threshold - current_target_value) + 1e-6
+        improvement_ratio = abs(delta * estimated_effect) / gap
+
         return {
             'proximity': proximity,
             'sparsity': sparsity,
             'stability': stability,
             'flip_success_rate': flip_success_rate,
-            'causal_plausibility': plausibility
+            'causal_plausibility': plausibility,
+            'improvement_ratio': float(improvement_ratio)
         }
 
-    def _resolve_intervention(self, source: str, required_delta: float, direction_sign: float) -> Optional[Dict]:
-        lo, hi = self.get_valid_range(source)
-        max_step = self.get_max_step_delta(source)
-        source_current = self.get_current_state(source)
+    def get_candidates(
+        self,
+        target: str,
+        direction: str,
+        threshold: float,
+        current_value: Optional[float] = None,
+        max_hops: int = 2,
+        verbose: bool = False
+    ) -> Tuple[List[Dict], Optional[float]]:
+        if direction not in ('increase', 'decrease'):
+            raise ValueError("direction must be 'increase' or 'decrease'")
 
-        if not (lo <= source_current <= hi):
-            print(f"Skipping path via '{source}': current value {source_current:.3f} is already outside "
-                  f"its typical range [{lo:.3f}, {hi:.3f}] (looks like an outlier day); "
-                  f"clipping to range would misrepresent the direction of change.")
+        if target not in self.dag.nodes():
+            return [], current_value
+
+        if current_value is None:
+            current_value = self.get_current_state(target)
+
+        gap = threshold - current_value
+        direction_sign = 1.0 if direction == 'increase' else -1.0
+        if (direction == 'increase' and gap <= 0) or (direction == 'decrease' and gap >= 0):
+            return [], current_value
+
+        actionable_vars = self.identify_actionable_variables(verbose=False)
+        paths = self.get_valid_causal_paths(target, actionable_vars, max_hops=max_hops)
+
+        if not paths:
+            return [], current_value
+
+        candidates = []
+        for path_info in paths:
+            effect = path_info['estimated_effect']
+            if abs(effect) < 1e-9:
+                continue
+
+            source = path_info['source']
+            required_delta = gap / effect
+
+            lo, hi = self.get_valid_range(source)
+            max_step = self.get_max_step_delta(source)
+            source_current = self.get_current_state(source)
+
+            if source_current < lo or source_current > hi:
+                continue
+
+            clipped_delta = float(np.clip(required_delta, -max_step, max_step))
+            proposed_value = float(np.clip(source_current + clipped_delta, lo, hi))
+            actual_delta = proposed_value - source_current
+
+            if abs(actual_delta) < 1e-9:
+                continue
+
+            required_sign = np.sign(required_delta) if required_delta != 0 else direction_sign
+            actual_sign = np.sign(actual_delta)
+            if required_sign != 0 and actual_sign != 0 and actual_sign != required_sign:
+                continue
+
+            metrics = self.evaluate_counterfactual(
+                current_target_value=current_value,
+                delta=actual_delta,
+                estimated_effect=effect,
+                plausibility=path_info['plausibility'],
+                source_std=self.agg_df[source].std(),
+                source_max_step=max_step,
+                threshold=threshold,
+                direction=direction
+            )
+
+            if metrics['flip_success_rate'] < MIN_RELIABLE_FLIP_RATE:
+                continue
+
+            cf_score = self.compute_cf_score(metrics)
+
+            candidates.append({
+                'target': target,
+                'direction': direction,
+                'source_variable': source,
+                'causal_path': ' -> '.join(path_info['path']),
+                'lag_days': path_info['total_lag'],
+                'current_source_value': source_current,
+                'proposed_source_value': proposed_value,
+                'delta': actual_delta,
+                'estimated_target_change': actual_delta * effect,
+                'valid_range': (lo, hi),
+                'max_step_delta': max_step,
+                **metrics,
+                'cf_score': cf_score
+            })
+
+        return candidates, current_value
+
+    @staticmethod
+    def select_current_weighted_score(candidates: List[Dict], reliability_cutoff: float = MIN_RELIABLE_FLIP_RATE) -> Optional[Dict]:
+        feasible = [c for c in candidates if c['flip_success_rate'] >= reliability_cutoff]
+        if not feasible:
             return None
+        return max(feasible, key=lambda c: c['cf_score'])
 
-        clipped_delta = float(np.clip(required_delta, -max_step, max_step))
-        proposed_value = float(np.clip(source_current + clipped_delta, lo, hi))
-        actual_delta = proposed_value - source_current
-
-        if abs(actual_delta) < 1e-9:
+    @staticmethod
+    def select_random_feasible(candidates: List[Dict], rng: np.random.Generator, reliability_cutoff: float = MIN_RELIABLE_FLIP_RATE) -> Optional[Dict]:
+        feasible = [c for c in candidates if c['flip_success_rate'] >= reliability_cutoff]
+        if not feasible:
             return None
+        idx = int(rng.integers(0, len(feasible)))
+        return feasible[idx]
 
-        required_sign = np.sign(required_delta) if required_delta != 0 else direction_sign
-        actual_sign = np.sign(actual_delta)
-        if required_sign != 0 and actual_sign != 0 and actual_sign != required_sign:
-            print(f"Skipping path via '{source}': range clipping reversed the intended direction "
-                  f"(wanted {'increase' if required_sign > 0 else 'decrease'}, "
-                  f"got {'increase' if actual_sign > 0 else 'decrease'}); "
-                  f"'{source}' is too close to its historical extreme to move further that way.")
+    @staticmethod
+    def select_min_standardized_change(candidates: List[Dict], reliability_cutoff: float = MIN_RELIABLE_FLIP_RATE) -> Optional[Dict]:
+        feasible = [c for c in candidates if c['flip_success_rate'] >= reliability_cutoff and np.isfinite(c['proximity'])]
+        if not feasible:
             return None
+        return min(feasible, key=lambda c: c['proximity'])
 
-        return {
-            'source_current': source_current,
-            'proposed_value': proposed_value,
-            'actual_delta': actual_delta,
-            'valid_range': (lo, hi),
-            'max_step': max_step
-        }
+    @staticmethod
+    def select_max_predicted_move(candidates: List[Dict], reliability_cutoff: float = MIN_RELIABLE_FLIP_RATE) -> Optional[Dict]:
+        feasible = [c for c in candidates if c['flip_success_rate'] >= reliability_cutoff]
+        if not feasible:
+            return None
+        return max(feasible, key=lambda c: abs(c['estimated_target_change']))
 
     def generate_counterfactual(
         self,
@@ -309,86 +398,11 @@ class Layer3CounterfactualExplanation:
         max_hops: int = 2,
         top_k: int = 3
     ) -> List[Dict]:
-        if direction not in ('increase', 'decrease'):
-            raise ValueError("direction must be 'increase' or 'decrease'")
-
-        if target not in self.dag.nodes():
-            print(f"'{target}' is not part of the discovered causal graph; no counterfactual can be generated.")
+        candidates, _ = self.get_candidates(target, direction, threshold, current_value, max_hops, verbose=False)
+        if not candidates:
             return []
-
-        if current_value is None:
-            current_value = self.get_current_state(target)
-
-        gap = threshold - current_value
-        direction_sign = 1.0 if direction == 'increase' else -1.0
-        if (direction == 'increase' and gap <= 0) or (direction == 'decrease' and gap >= 0):
-            print(f"'{target}' already satisfies the '{direction}' goal relative to threshold={threshold:.3f} "
-                  f"(current={current_value:.3f}); no intervention needed.")
-            return []
-
-        actionable_vars = self.identify_actionable_variables(verbose=False)
-        paths = self.get_valid_causal_paths(target, actionable_vars, max_hops=max_hops)
-
-        if not paths:
-            print(f"No actionable causal path leads to '{target}' within {max_hops} hop(s); "
-                  f"the discovered DAG offers no valid lever for this outcome.")
-            return []
-
-        results = []
-        for path_info in paths:
-            effect = path_info['estimated_effect']
-            if abs(effect) < 1e-9:
-                continue
-
-            source = path_info['source']
-            required_delta = gap / effect
-
-            resolved = self._resolve_intervention(source, required_delta, direction_sign)
-            if resolved is None:
-                continue
-
-            actual_delta = resolved['actual_delta']
-
-            metrics = self.evaluate_counterfactual(
-                current_target_value=current_value,
-                delta=actual_delta,
-                estimated_effect=effect,
-                plausibility=path_info['plausibility'],
-                source_std=self.agg_df[source].std(),
-                source_max_step=resolved['max_step'],
-                threshold=threshold,
-                direction=direction
-            )
-
-            if metrics['flip_success_rate'] < MIN_RELIABLE_FLIP_RATE:
-                print(f"Discarding path via '{source}': flip_success_rate={metrics['flip_success_rate']:.3f} "
-                      f"is below the {MIN_RELIABLE_FLIP_RATE:.0%} reliability floor; "
-                      f"this intervention essentially never reaches the goal under realistic noise.")
-                continue
-
-            cf_score = self.compute_cf_score(metrics)
-
-            results.append({
-                'target': target,
-                'source_variable': source,
-                'causal_path': ' -> '.join(path_info['path']),
-                'lag_days': path_info['total_lag'],
-                'current_source_value': resolved['source_current'],
-                'proposed_source_value': resolved['proposed_value'],
-                'delta': actual_delta,
-                'estimated_target_change': actual_delta * effect,
-                'valid_range': resolved['valid_range'],
-                'max_step_delta': resolved['max_step'],
-                **metrics,
-                'cf_score': cf_score
-            })
-
-        results.sort(key=lambda r: -r['cf_score'])
-        for r in results:
-            if r['proximity'] > 2.0:
-                print(f"Caution: proposed change to '{r['source_variable']}' is {r['proximity']:.1f}x its typical "
-                      f"day-to-day standard deviation — a large, less realistic intervention.")
-        return results[:top_k]
+        ranked = sorted(candidates, key=lambda r: (-r['cf_score'], -r.get('improvement_ratio', 0.0)))
+        return ranked[:top_k]
 
     def generate_student_counterfactuals(
         self,
@@ -407,11 +421,10 @@ class Layer3CounterfactualExplanation:
 
         user_stats = layer1_df.groupby('user_id')[target_col].mean().rename('current_value').reset_index()
         class_threshold = float(layer1_df[target_col].quantile(threshold_quantile))
-        n_degenerate = int((user_stats['current_value'] == 0.0).sum())
-        if n_degenerate > 0 and selection == 'lowest':
-            print(f"Excluding {n_degenerate} student(s) with current_value exactly 0.0 for '{target}' "
-                  f"(this is Layer 1's data-sparsity fallback, not a genuine low value) before picking the lowest performers")
+
+        if selection == 'lowest':
             user_stats = user_stats[user_stats['current_value'] != 0.0]
+
         user_stats = user_stats.sort_values('current_value', ascending=(selection == 'lowest'))
         selected_users = user_stats.head(n_users)
 
@@ -423,11 +436,11 @@ class Layer3CounterfactualExplanation:
             step = self.get_max_step_delta_from_windows(layer1_df, target_col)
             if not np.isfinite(step) or step <= 0:
                 step = float(layer1_df[target_col].std())
-            print(f"Selected {len(selected_users)} students (lowest '{target}') to test a realistic "
-                  f"single-step improvement of about {step:.3f} (typical day-to-day movement of '{target}')")
+            std_t = float(layer1_df[target_col].std())
+            if np.isfinite(std_t) and std_t > 0:
+                step = min(step, 1.2 * std_t)
         else:
-            print(f"Selected {len(selected_users)} students (lowest '{target}') to test counterfactual push toward "
-                  f"class threshold={class_threshold:.3f}")
+            step = None
 
         rows = []
         for _, urow in selected_users.iterrows():
@@ -435,15 +448,21 @@ class Layer3CounterfactualExplanation:
             current_value = float(urow['current_value'])
             user_windows = layer1_df[layer1_df['user_id'] == user_id].sort_values('window_start_time')
 
-            threshold = current_value + direction_sign * step if realistic_step else class_threshold
+            if realistic_step:
+                threshold = current_value + direction_sign * step
+            else:
+                threshold = class_threshold
 
             gap = threshold - current_value
             goal_met = (direction == 'increase' and gap <= 0) or (direction == 'decrease' and gap >= 0)
 
             if goal_met or not paths:
                 rows.append({
-                    'user_id': user_id, 'target': target, 'current_value': current_value,
-                    'threshold': threshold, 'status': 'no_intervention_needed' if goal_met else 'no_causal_path',
+                    'user_id': user_id,
+                    'target': target,
+                    'current_value': current_value,
+                    'threshold': threshold,
+                    'status': 'no_intervention_needed' if goal_met else 'no_causal_path',
                     'cf_score': np.nan
                 })
                 continue
@@ -464,7 +483,7 @@ class Layer3CounterfactualExplanation:
                 lo, hi = self.get_valid_range_from_windows(layer1_df, source_col)
                 max_step = self.get_max_step_delta_from_windows(layer1_df, source_col)
 
-                if not (lo <= source_current <= hi):
+                if source_current < lo or source_current > hi:
                     continue
 
                 required_delta = gap / effect
@@ -515,8 +534,12 @@ class Layer3CounterfactualExplanation:
                     best = candidate
 
             rows.append(best if best is not None else {
-                'user_id': user_id, 'target': target, 'current_value': current_value,
-                'threshold': threshold, 'status': 'no_reliable_intervention_within_bounds', 'cf_score': np.nan
+                'user_id': user_id,
+                'target': target,
+                'current_value': current_value,
+                'threshold': threshold,
+                'status': 'no_reliable_intervention_within_bounds',
+                'cf_score': np.nan
             })
 
         return pd.DataFrame(rows)

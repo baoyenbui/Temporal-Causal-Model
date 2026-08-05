@@ -1,14 +1,43 @@
 from collections import defaultdict
+from typing import Dict, Tuple, Optional, List
 import numpy as np
 import pandas as pd
+import networkx as nx
 
 from src.causal_discovery import Layer2StructureLearning
 from src.cf import Layer3CounterfactualExplanation
 
 LAYER2_KWARGS = dict(max_lag=2, alpha=0.1, pc_alpha=0.2, corr_threshold=0.97, min_effect=0.12)
+RESPONSE_TIME_FALLBACK_COLS = ('avg_response_time', 'median_response_time', 'response_time_std')
+SELECTION_METHODS = ('CURRENT_WEIGHTED_SCORE', 'RANDOM_FEASIBLE', 'MIN_STANDARDIZED_CHANGE', 'MAX_PREDICTED_MOVE')
+MIN_RELIABLE_FLIP_RATE = 0.05
+DEFAULT_CF_SCORE_WEIGHTS = {
+    'proximity': 0.20,
+    'sparsity': 0.20,
+    'stability': 0.20,
+    'flip_success_rate': 0.25,
+    'causal_plausibility': 0.15
+}
 
 
-def bootstrap_causal_graph(layer1_df: pd.DataFrame, n_bootstrap: int = 20, seed: int = 42, verbose: bool = False) -> pd.DataFrame:
+def classify_direction(estimated_target_change: float, direction: str) -> str:
+    actual_sign = int(np.sign(estimated_target_change))
+    expected_sign = 1 if direction == 'increase' else -1
+    if actual_sign == 0:
+        return 'zero_effect'
+    return 'correct' if actual_sign == expected_sign else 'wrong_direction'
+
+
+def summarize_pair_coverage(rows_df: pd.DataFrame, n_pairs_tested: int) -> Dict:
+    if n_pairs_tested == 0:
+        return {'n_pairs_covered': 0, 'coverage': float('nan')}
+    if len(rows_df) == 0:
+        return {'n_pairs_covered': 0, 'coverage': 0.0}
+    n_covered = rows_df[['target', 'direction']].drop_duplicates().shape[0]
+    return {'n_pairs_covered': n_covered, 'coverage': n_covered / n_pairs_tested}
+
+
+def bootstrap_causal_graph(layer1_df: pd.DataFrame, n_bootstrap: int = 20, seed: int = 42) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     user_ids = layer1_df['user_id'].unique()
     edge_counts = defaultdict(int)
@@ -24,9 +53,7 @@ def bootstrap_causal_graph(layer1_df: pd.DataFrame, n_bootstrap: int = 20, seed:
         builder = Layer2StructureLearning(**LAYER2_KWARGS)
         try:
             _, causal_graph = builder.build_layer2(resampled)
-        except Exception as e:
-            if verbose:
-                print(f"Bootstrap iteration {i + 1}/{n_bootstrap}: failed ({type(e).__name__}: {e}), skipping")
+        except Exception:
             continue
         successful_runs += 1
         seen_this_run = set()
@@ -59,12 +86,20 @@ def bootstrap_causal_graph(layer1_df: pd.DataFrame, n_bootstrap: int = 20, seed:
     return result_df
 
 
+def _default_threshold(layer3: Layer3CounterfactualExplanation, agg_df: pd.DataFrame, target: str, direction: str):
+    current_value = layer3.get_current_state(target)
+    step = layer3.get_max_step_delta(target)
+    if not np.isfinite(step) or step <= 0:
+        step = float(agg_df[target].std())
+    direction_sign = 1.0 if direction == 'increase' else -1.0
+    threshold = current_value + direction_sign * step
+    return current_value, threshold
+
+
 def evaluate_layer3_directions(
     causal_graph: dict,
     agg_df: pd.DataFrame,
-    n_targets: int = 6,
-    seed: int = 42,
-    verbose: bool = False
+    max_hops: int = 2
 ) -> pd.DataFrame:
     layer3 = Layer3CounterfactualExplanation(causal_graph=causal_graph, agg_df=agg_df)
     actionable_vars = layer3.identify_actionable_variables(verbose=False)
@@ -72,44 +107,173 @@ def evaluate_layer3_directions(
 
     reachable_targets = []
     for node in all_nodes:
-        paths = layer3.get_valid_causal_paths(node, actionable_vars, max_hops=2)
+        paths = layer3.get_valid_causal_paths(node, actionable_vars, max_hops=max_hops)
         if paths:
             reachable_targets.append(node)
 
     n_pairs_tested = len(reachable_targets) * 2
-
     rows = []
     for target in reachable_targets:
         for direction in ('increase', 'decrease'):
-            current_value = layer3.get_current_state(target)
-            step = layer3.get_max_step_delta(target)
-            if not np.isfinite(step) or step <= 0:
-                step = float(agg_df[target].std())
-            direction_sign = 1.0 if direction == 'increase' else -1.0
-            threshold = current_value + direction_sign * step
-
+            current_value, threshold = _default_threshold(layer3, agg_df, target, direction)
             results = layer3.generate_counterfactual(
-                target=target, direction=direction, threshold=threshold,
-                current_value=current_value, top_k=3
+                target=target,
+                direction=direction,
+                threshold=threshold,
+                current_value=current_value,
+                max_hops=max_hops,
+                top_k=3
             )
             for r in results:
-                expected_sign = 1 if direction == 'increase' else -1
-                actual_sign = int(np.sign(r['estimated_target_change']))
-                direction_ok = (actual_sign == expected_sign) or (actual_sign == 0)
+                status = classify_direction(r['estimated_target_change'], direction)
                 rows.append({
                     'target': target,
                     'direction': direction,
                     'source_variable': r['source_variable'],
                     'estimated_target_change': r['estimated_target_change'],
-                    'direction_correct': direction_ok,
+                    'status': status,
+                    'direction_correct': status == 'correct',
                     'flip_success_rate': r['flip_success_rate'],
                     'cf_score': r['cf_score']
                 })
 
     df = pd.DataFrame(rows)
+    coverage_info = summarize_pair_coverage(df, n_pairs_tested)
     df.attrs['n_pairs_tested'] = n_pairs_tested
     df.attrs['n_reachable_targets'] = len(reachable_targets)
+    df.attrs['n_pairs_covered'] = coverage_info['n_pairs_covered']
+    df.attrs['coverage'] = coverage_info['coverage']
     return df
+
+
+def build_target_diagnostic_table(
+    causal_graph: dict,
+    agg_df: pd.DataFrame,
+    layer1_df: pd.DataFrame,
+    max_hops: int = 2
+) -> pd.DataFrame:
+    layer3 = Layer3CounterfactualExplanation(causal_graph=causal_graph, agg_df=agg_df)
+    targets = list(layer3.dag.nodes())
+    rows = []
+    for target in targets:
+        for direction in ('increase', 'decrease'):
+            current_value, threshold = _default_threshold(layer3, agg_df, target, direction)
+            candidates, _ = layer3.get_candidates(
+                target, direction, threshold, current_value, max_hops, verbose=False
+            )
+            n_candidates = len(candidates)
+            n_zero = sum(1 for c in candidates if classify_direction(c['estimated_target_change'], direction) == 'zero_effect')
+            zero_rate = n_zero / n_candidates if n_candidates else float('nan')
+
+            target_col = layer3._layer1_col(target)
+            if target_col in layer1_df.columns:
+                if target_col in RESPONSE_TIME_FALLBACK_COLS:
+                    missing_rate = float((layer1_df[target_col] == 0.0).mean())
+                else:
+                    missing_rate = float(layer1_df[target_col].isna().mean())
+            else:
+                missing_rate = float('nan')
+
+            direct_parents = sorted({e['source'] for e in causal_graph.get(target, [])})
+            expected_meaning = (
+                f"reachable via: {', '.join(direct_parents)}"
+                if direct_parents else "no direct causal parent in this graph"
+            )
+
+            rows.append({
+                'target': target,
+                'direction': direction,
+                'zero_rate': zero_rate,
+                'missing_rate': missing_rate,
+                'n_feasible_paths': n_candidates,
+                'expected_meaning': expected_meaning
+            })
+    return pd.DataFrame(rows)
+
+
+def _select_by_method(method: str, candidates, rng):
+    if method == 'CURRENT_WEIGHTED_SCORE':
+        return Layer3CounterfactualExplanation.select_current_weighted_score(candidates, reliability_cutoff=MIN_RELIABLE_FLIP_RATE)
+    if method == 'RANDOM_FEASIBLE':
+        return Layer3CounterfactualExplanation.select_random_feasible(candidates, rng, reliability_cutoff=MIN_RELIABLE_FLIP_RATE)
+    if method == 'MIN_STANDARDIZED_CHANGE':
+        return Layer3CounterfactualExplanation.select_min_standardized_change(candidates, reliability_cutoff=MIN_RELIABLE_FLIP_RATE)
+    if method == 'MAX_PREDICTED_MOVE':
+        return Layer3CounterfactualExplanation.select_max_predicted_move(candidates, reliability_cutoff=MIN_RELIABLE_FLIP_RATE)
+    raise ValueError(f"Unknown selection method '{method}'")
+
+
+def run_baseline_comparison(
+    causal_graph: dict,
+    agg_df: pd.DataFrame,
+    max_hops: int = 2,
+    seed: int = 42
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    layer3 = Layer3CounterfactualExplanation(causal_graph=causal_graph, agg_df=agg_df)
+    targets = list(layer3.dag.nodes())
+    directions = ('increase', 'decrease')
+    rng = np.random.default_rng(seed)
+
+    detail_rows = []
+    for target in targets:
+        for direction in directions:
+            current_value, threshold = _default_threshold(layer3, agg_df, target, direction)
+            candidates, _ = layer3.get_candidates(
+                target, direction, threshold, current_value, max_hops, verbose=False
+            )
+            has_candidates = len(candidates) > 0
+            for method in SELECTION_METHODS:
+                selected = _select_by_method(method, candidates, rng)
+                if selected is None:
+                    detail_rows.append({
+                        'method': method,
+                        'target': target,
+                        'direction': direction,
+                        'has_candidates': has_candidates,
+                        'status': 'no_candidate',
+                        'flip_success_rate': np.nan,
+                        'cf_score': np.nan,
+                        'proximity': np.nan,
+                        'estimated_target_change': np.nan
+                    })
+                    continue
+                status = classify_direction(selected['estimated_target_change'], direction)
+                detail_rows.append({
+                    'method': method,
+                    'target': target,
+                    'direction': direction,
+                    'has_candidates': has_candidates,
+                    'status': status,
+                    'flip_success_rate': selected['flip_success_rate'],
+                    'cf_score': selected['cf_score'],
+                    'proximity': selected['proximity'],
+                    'estimated_target_change': selected['estimated_target_change']
+                })
+
+    detail_df = pd.DataFrame(detail_rows)
+    n_pairs_tested = len(targets) * len(directions)
+
+    summary_rows = []
+    for method in SELECTION_METHODS:
+        sub = detail_df[detail_df['method'] == method]
+        covered = sub[sub['status'] != 'no_candidate']
+        n_covered = covered[['target', 'direction']].drop_duplicates().shape[0]
+        n_total = len(covered)
+        n_correct = int((covered['status'] == 'correct').sum())
+        n_wrong = int((covered['status'] == 'wrong_direction').sum())
+        n_zero = int((covered['status'] == 'zero_effect').sum())
+        proximity_clean = covered['proximity'].replace([np.inf, -np.inf], np.nan)
+        summary_rows.append({
+            'method': method,
+            'coverage': n_covered / n_pairs_tested if n_pairs_tested else float('nan'),
+            'pct_correct_direction': n_correct / n_total if n_total else float('nan'),
+            'pct_wrong_direction': n_wrong / n_total if n_total else float('nan'),
+            'pct_zero_effect': n_zero / n_total if n_total else float('nan'),
+            'mean_flip_success_rate': covered['flip_success_rate'].mean() if n_total else float('nan'),
+            'mean_cf_score': covered['cf_score'].mean() if n_total else float('nan'),
+            'mean_proximity': proximity_clean.mean() if n_total else float('nan')
+        })
+    return pd.DataFrame(summary_rows), detail_df
 
 
 def build_results_table(
@@ -118,7 +282,6 @@ def build_results_table(
     stability_threshold: float = 0.5
 ) -> pd.DataFrame:
     metrics = []
-
     successful_runs = stability_df.attrs.get('successful_runs', None) if stability_df is not None else None
     n_bootstrap = stability_df.attrs.get('n_bootstrap', None) if stability_df is not None else None
     total_edges = len(stability_df) if stability_df is not None else 0
@@ -132,21 +295,43 @@ def build_results_table(
     metrics.append(('Mean edge stability', f"{stability_df['stability'].mean():.3f}" if total_edges > 0 else "n/a"))
 
     n_pairs_tested = layer3_df.attrs.get('n_pairs_tested', None) if layer3_df is not None else None
+    n_pairs_covered = layer3_df.attrs.get('n_pairs_covered', None) if layer3_df is not None else None
+    coverage = layer3_df.attrs.get('coverage', None) if layer3_df is not None else None
     n_reachable = layer3_df.attrs.get('n_reachable_targets', None) if layer3_df is not None else None
-    n_results = len(layer3_df) if layer3_df is not None else 0
-    n_wrong = int((~layer3_df['direction_correct']).sum()) if n_results > 0 else 0
+    n_candidate_rows = len(layer3_df) if layer3_df is not None else 0
+
+    if n_candidate_rows > 0:
+        pair_status = (
+            layer3_df
+            .groupby(['target', 'direction'])['status']
+            .apply(lambda s: (
+                'correct' if (s == 'correct').any()
+                else 'wrong_direction' if (s == 'wrong_direction').any()
+                else 'zero_effect' if (s == 'zero_effect').any()
+                else 'other'
+            ))
+            .reset_index(name='pair_status')
+        )
+        n_correct_pairs = int((pair_status['pair_status'] == 'correct').sum())
+        n_wrong_pairs = int((pair_status['pair_status'] == 'wrong_direction').sum())
+        n_zero_pairs = int((pair_status['pair_status'] == 'zero_effect').sum())
+    else:
+        n_correct_pairs = 0
+        n_wrong_pairs = 0
+        n_zero_pairs = 0
 
     metrics.append(('DAG nodes reachable via an actionable path', n_reachable if n_reachable is not None else "n/a"))
     metrics.append(('(Target, direction) pairs tested', n_pairs_tested if n_pairs_tested is not None else "n/a"))
-    metrics.append(('Pairs yielding >=1 reliable counterfactual', n_results if n_results > 0 else 0))
-    metrics.append(('Coverage (reliable CF / pairs tested)',
-                     f"{n_results / n_pairs_tested:.1%}" if n_pairs_tested else "n/a"))
-    metrics.append(('Wrong-direction results (should be 0)', n_wrong))
-    metrics.append(('Mean flip_success_rate', f"{layer3_df['flip_success_rate'].mean():.3f}" if n_results > 0 else "n/a"))
-    metrics.append(('Median flip_success_rate', f"{layer3_df['flip_success_rate'].median():.3f}" if n_results > 0 else "n/a"))
-    metrics.append(('Mean cf_score', f"{layer3_df['cf_score'].mean():.3f}" if n_results > 0 else "n/a"))
-    metrics.append(('Median cf_score', f"{layer3_df['cf_score'].median():.3f}" if n_results > 0 else "n/a"))
-
+    metrics.append(('Pairs covered (>=1 candidate found, unique pairs)', n_pairs_covered if n_pairs_covered is not None else "n/a"))
+    metrics.append(('Coverage (unique pairs covered / pairs tested)', f"{coverage:.1%}" if coverage is not None else "n/a"))
+    metrics.append(('Total candidate rows returned', n_candidate_rows))
+    metrics.append(('Pairs with >=1 correct candidate', n_correct_pairs))
+    metrics.append(('Pairs with only wrong direction', n_wrong_pairs))
+    metrics.append(('Pairs with only zero effect', n_zero_pairs))
+    metrics.append(('Mean flip_success_rate (over candidate rows)', f"{layer3_df['flip_success_rate'].mean():.3f}" if n_candidate_rows > 0 else "n/a"))
+    metrics.append(('Median flip_success_rate (over candidate rows)', f"{layer3_df['flip_success_rate'].median():.3f}" if n_candidate_rows > 0 else "n/a"))
+    metrics.append(('Mean cf_score (over candidate rows)', f"{layer3_df['cf_score'].mean():.3f}" if n_candidate_rows > 0 else "n/a"))
+    metrics.append(('Median cf_score (over candidate rows)', f"{layer3_df['cf_score'].median():.3f}" if n_candidate_rows > 0 else "n/a"))
     return pd.DataFrame(metrics, columns=['Metric', 'Value'])
 
 
@@ -155,13 +340,19 @@ def run_full_evaluation(
     agg_df: pd.DataFrame,
     causal_graph: dict,
     n_bootstrap: int = 20,
-    n_layer3_targets: int = 6,
-    stability_threshold: float = 0.5
+    stability_threshold: float = 0.5,
+    max_hops: int = 2
 ) -> dict:
     stability_df = bootstrap_causal_graph(layer1_df, n_bootstrap=n_bootstrap)
-    layer3_df = evaluate_layer3_directions(causal_graph, agg_df, n_targets=n_layer3_targets)
+    layer3_df = evaluate_layer3_directions(causal_graph, agg_df, max_hops=max_hops)
     results_table = build_results_table(stability_df, layer3_df, stability_threshold=stability_threshold)
-
-    print(results_table.to_string(index=False))
-
-    return {'stability': stability_df, 'layer3': layer3_df, 'results_table': results_table}
+    diagnostic_df = build_target_diagnostic_table(causal_graph, agg_df, layer1_df, max_hops=max_hops)
+    baseline_summary_df, baseline_detail_df = run_baseline_comparison(causal_graph, agg_df, max_hops=max_hops)
+    return {
+        'stability': stability_df,
+        'layer3': layer3_df,
+        'results_table': results_table,
+        'target_diagnostic': diagnostic_df,
+        'baseline_summary': baseline_summary_df,
+        'baseline_detail': baseline_detail_df
+    }
