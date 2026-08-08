@@ -143,8 +143,30 @@ def main():
     layer3 = Layer3CounterfactualExplanation(causal_graph=causal_graph, agg_df=agg_df)
     actionable_vars = layer3.identify_actionable_variables()
 
-    cf_target = 'avg_response_time'
+    cf_target = 'avg_success'
     current_val = layer3.get_current_state(cf_target)
+
+    print(f"\n=== PRIMARY: How much can '{cf_target}' realistically improve? ===")
+    print(f"(No external threshold. Each actionable cause is pushed to its realistic historical limit;")
+    print(f" we report achievable continuous improvement and reliability.)")
+    sim_scored = layer3.evaluate_forward_simulation(target=cf_target, direction='increase', max_hops=2)
+    if sim_scored:
+        for r in sim_scored:
+            print(f"  Push '{r['source_variable']}' to its realistic limit: "
+                  f"{r['current_source_value']:.3f} -> {r['max_feasible_source_value']:.3f} "
+                  f"(delta={r['max_feasible_delta']:+.3f})")
+            print(f"      => achievable improvement in '{cf_target}': {r['current_target_value']:.3f} -> "
+                  f"{r['achievable_target_value']:.3f} (change={r['achievable_change']:+.3f})")
+            print(f"      forward_cf_score={r['forward_cf_score']:.3f} | "
+                  f"normalized_effect={r['normalized_effect']:.3f} | "
+                  f"efficiency={r['efficiency']:.3f} | effect_snr={r['effect_snr']:.3f} | "
+                  f"causal_plausibility={r['causal_plausibility']:.3f}")
+    else:
+        print(f"  No actionable causal path moves '{cf_target}' in the requested direction.")
+
+    print(f"\n=== SECONDARY (goal-specific): move '{cf_target}' toward a modest one-step target ===")
+    print(f"(cf_score ranks intrinsic quality of the intervention;")
+    print(f" status only reports whether this particular external threshold is reached.)")
     target_step = layer3.get_max_step_delta(cf_target)
     if not np.isfinite(target_step) or target_step <= 0:
         target_step = float(agg_df[cf_target].std())
@@ -159,18 +181,22 @@ def main():
     )
 
     if cf_results:
-        print(f"\nCounterfactuals to push '{cf_target}' from {current_val:.3f} up to >= {cf_threshold:.3f}:")
+        print(f"\nCandidates to move '{cf_target}' from {current_val:.3f} toward {cf_threshold:.3f}:")
         for r in cf_results:
             print(f"  Change '{r['source_variable']}' from {r['current_source_value']:.3f} to "
                   f"{r['proposed_source_value']:.3f} (delta={r['delta']:+.3f}) via path [{r['causal_path']}], "
-                  f"lag={r['lag_days']}d")
+                  f"lag={r['lag_days']}d — status={r['status']}")
             print(f"    cf_score={r['cf_score']:.3f} | estimated_target_change={r['estimated_target_change']:+.3f} | "
                   f"proximity={r['proximity']:.3f} | sparsity={r['sparsity']} | "
                   f"effect_snr={r['effect_snr']:.3f} | flip_success_rate={r['flip_success_rate']:.3f} | "
+                  f"prob_improvement={r['prob_improvement']:.3f} | "
                   f"causal_plausibility={r['causal_plausibility']:.3f}")
+            if r.get('prob_improvement', 0) - r.get('flip_success_rate', 0) > 0.3:
+                print(f"    Note: high prob_improvement with low flip_success_rate means the intervention "
+                      f"reliably improves the outcome, but the chosen threshold is demanding relative to "
+                      f"the achievable effect size.")
     else:
-        print(f"\nNo reliable counterfactuals found for '{cf_target}' after filtering out low-confidence "
-              f"and wrong-direction candidates.")
+        print(f"\nNo actionable causal path available to move '{cf_target}'.")
 
     print("\n--- Layer 3: 5-Student Counterfactual Test ---")
     student_cf_df = layer3.generate_student_counterfactuals(
@@ -178,22 +204,42 @@ def main():
         target=cf_target,
         direction='increase',
         n_users=5,
-        threshold_quantile=0.75
+        threshold_quantile=0.60,
+        realistic_step=True
     )
     print(student_cf_df.to_string(index=False))
 
-    print("\n--- Layer 3: Forward Simulation (max feasible push, no external threshold) ---")
-    sim_results = layer3.simulate_max_feasible_effect(target=cf_target, direction='increase', max_hops=2)
-    if sim_results:
-        for r in sim_results:
-            arrow = "✓" if r['moves_correct_direction'] else "✗"
-            print(f"  [{arrow}] Push '{r['source_variable']}' to its realistic limit: "
-                  f"{r['current_source_value']:.3f} -> {r['max_feasible_source_value']:.3f} "
-                  f"(delta={r['max_feasible_delta']:+.3f})")
-            print(f"      => best achievable '{cf_target}': {r['current_target_value']:.3f} -> "
-                  f"{r['achievable_target_value']:.3f} (change={r['achievable_change']:+.3f})")
+    print("\n--- Layer 3: Multi-Variable Counterfactual ---")
+    multi_var_results = layer3.generate_multi_variable_counterfactual(
+        target=cf_target, direction='increase', threshold=cf_threshold, current_value=current_val,
+        max_hops=2, max_vars=2, top_k=3
+    )
+    if multi_var_results:
+        for r in multi_var_results:
+            names = " + ".join(p['source_variable'] for p in r['pushes'])
+            print(f"  [{r['status']}] {names}: {r['current_target_value']:.3f} -> "
+                  f"{r['achievable_target_value']:.3f} (cf_score={r['cf_score']:.3f})")
+            for p in r['pushes']:
+                print(f"      {p['source_variable']}: {p['current_source_value']:.3f} -> "
+                      f"{p['proposed_source_value']:.3f} (delta={p['delta']:+.3f})")
     else:
-        print(f"  No actionable causal path to simulate for '{cf_target}'.")
+        print(f"  No independent 2-variable combination found for '{cf_target}'.")
+
+    print("\n--- Layer 3: Multi-Step Counterfactual ---")
+    multi_step_results = layer3.generate_multi_step_counterfactual(
+        target=cf_target, direction='increase', threshold=cf_threshold, current_value=current_val,
+        max_hops=2, n_steps=3, top_k=3
+    )
+    if multi_step_results:
+        for r in multi_step_results:
+            print(f"  [{r['status']}] '{r['source_variable']}' over {r['n_steps_used']} step(s): "
+                  f"{r['current_target_value']:.3f} -> {r['achievable_target_value']:.3f} "
+                  f"(cf_score={r['cf_score']:.3f})")
+            for step in r['plan']:
+                print(f"      step {step['step']} (+{step['lag_days']}d): source={step['source_value']:.3f}, "
+                      f"target={step['target_value']:.3f}")
+    else:
+        print(f"  No feasible multi-step plan found for '{cf_target}'.")
 
     print("\n--- Evaluation ---")
     evaluation_results = run_full_evaluation(layer1_df, agg_df, causal_graph)
