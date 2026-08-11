@@ -1,1 +1,20 @@
-ÿþ
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Google Drive injects these into synced folders, including .git/refs, where git reads
+# every file as a ref and fetch fails with "bad object refs/desktop.ini".
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Run outputs
+manifest*.json
