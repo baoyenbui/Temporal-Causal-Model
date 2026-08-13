@@ -15,6 +15,10 @@ import pandas as pd
 PRIMARY_TARGET = "ate_k_1__"
 SENSITIVITY_TARGET = "ate_p_1__"
 
+LOG_TYPE_COLUMN = "Type"
+PRE_OUTCOME_LOG_TYPES = {"Checkin", "CheckinRetry", "Lesson"}
+OUTCOME_LOG_TYPES = {"Checkout", "CheckoutRetry"}
+
 N_BENCHMARK_ROWS = 88
 
 BENCHMARK_FILE = "construct_experiments_ates_test.csv"
@@ -176,3 +180,39 @@ def assert_no_forbidden_inputs(features: pd.DataFrame, where: str = "feature mat
             f"the treatment/control user counts, or a descendant of the checkout outcome, and "
             f"none of them is available before the row's outcome."
         )
+
+
+def assert_no_outcome_rows(logs: pd.DataFrame, where: str = "interaction logs") -> None:
+    """Fail if any checkout outcome row remains in logs supplied to a feature builder."""
+    if LOG_TYPE_COLUMN not in logs.columns:
+        raise ValueError(f"{where} is missing required log-type column '{LOG_TYPE_COLUMN}'")
+
+    n_outcome = int(logs[LOG_TYPE_COLUMN].isin(OUTCOME_LOG_TYPES).sum())
+    if n_outcome:
+        raise ValueError(
+            f"{where} contains {n_outcome} outcome row(s) with "
+            f"{LOG_TYPE_COLUMN} in {sorted(OUTCOME_LOG_TYPES)}"
+        )
+
+
+def filter_pre_outcome(logs: pd.DataFrame) -> pd.DataFrame:
+    """Keep only prespecified pre-outcome interaction types, failing closed on new types."""
+    if LOG_TYPE_COLUMN not in logs.columns:
+        raise ValueError(
+            f"interaction logs are missing required log-type column '{LOG_TYPE_COLUMN}'"
+        )
+
+    observed = set(logs[LOG_TYPE_COLUMN].dropna().unique())
+    if logs[LOG_TYPE_COLUMN].isna().any():
+        observed.add(None)
+    allowed = PRE_OUTCOME_LOG_TYPES | OUTCOME_LOG_TYPES
+    unknown = observed - allowed
+    if unknown:
+        raise ValueError(
+            f"interaction logs contain unknown {LOG_TYPE_COLUMN} value(s) "
+            f"{sorted(map(str, unknown))}; stop and ask the PI to classify them"
+        )
+
+    filtered = logs.loc[logs[LOG_TYPE_COLUMN].isin(PRE_OUTCOME_LOG_TYPES)].copy()
+    assert_no_outcome_rows(filtered, where="filtered interaction logs")
+    return filtered

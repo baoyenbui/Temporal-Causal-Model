@@ -18,15 +18,21 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.option_a.benchmark import (
     EXPECTED_COLUMNS,
     FORBIDDEN_MODEL_INPUTS,
+    LOG_TYPE_COLUMN,
     N_BENCHMARK_ROWS,
+    OUTCOME_LOG_TYPES,
     PRIMARY_TARGET,
+    PRE_OUTCOME_LOG_TYPES,
     SENSITIVITY_TARGET,
     assert_no_forbidden_inputs,
+    assert_no_outcome_rows,
+    filter_pre_outcome,
     load_benchmark,
     parse_control_lessons,
     verify_input_hashes,
 )
 from src.option_a.folds import FOLD_KEY, assert_folds_partition, leave_one_treatment_out
+from src.option_a.features import FeatureBuilder
 from src.option_a.methods import ZeroEffect, TrainMean, YearStratifiedMean
 from src.option_a.metrics import (
     cluster_bootstrap_ci,
@@ -111,6 +117,34 @@ def test_forbidden_inputs_are_rejected():
 def test_user_counts_are_forbidden_inputs():
     assert "ControlUsersCount" in FORBIDDEN_MODEL_INPUTS
     assert "TreatmentUsersCount" in FORBIDDEN_MODEL_INPUTS
+
+
+def test_filter_pre_outcome_keeps_frozen_pre_outcome_rows_only():
+    logs = pd.read_csv(os.path.join(DATA_DIR, "checkins_lessons_checkouts_training.csv"))
+    filtered = filter_pre_outcome(logs)
+
+    assert len(logs) == 641_490
+    assert len(filtered) == 563_117
+    assert set(filtered[LOG_TYPE_COLUMN]) == PRE_OUTCOME_LOG_TYPES
+
+
+def test_filter_pre_outcome_fails_closed_on_unknown_type():
+    logs = pd.DataFrame({LOG_TYPE_COLUMN: ["Checkin", "NewType"]})
+    with pytest.raises(ValueError, match="unknown Type value"):
+        filter_pre_outcome(logs)
+
+
+def test_filter_pre_outcome_requires_type_column():
+    with pytest.raises(ValueError, match="missing required log-type column 'Type'"):
+        filter_pre_outcome(pd.DataFrame({"IsCorrect": [True]}))
+
+
+def test_assert_no_outcome_rows_reports_checkout_count():
+    logs = pd.DataFrame(
+        {LOG_TYPE_COLUMN: ["Checkin", "Checkout", "CheckoutRetry", "Lesson"]}
+    )
+    with pytest.raises(ValueError, match="2 outcome row"):
+        assert_no_outcome_rows(logs, where="test logs")
 
 
 # --- folds -----------------------------------------------------------------------------
@@ -251,6 +285,185 @@ def test_protocol_is_reproducible(bench):
     assert a.manifest["results_sha256"] == b.manifest["results_sha256"]
 
 
+def test_protocol_never_passes_checkout_rows_to_feature_builder(bench):
+    class InspectingBuilder(FeatureBuilder):
+        name = "INSPECTING_BUILDER"
+
+        def fit(self, train_rows, logs=None):
+            assert_no_outcome_rows(logs, where="builder.fit logs")
+            assert set(logs[LOG_TYPE_COLUMN]) <= PRE_OUTCOME_LOG_TYPES
+            return self
+
+        def transform(self, rows, logs=None):
+            assert_no_outcome_rows(logs, where="builder.transform logs")
+            return self.check_output(
+                pd.DataFrame({"constant_feature": np.ones(len(rows))}), rows
+            )
+
+    class FeatureMethod:
+        name = "FEATURE_METHOD"
+        requires_features = True
+
+        def get_config(self):
+            return {}
+
+        def fit(self, train_rows, X_train, target):
+            self.value = float(train_rows[target].mean())
+
+        def predict(self, test_rows, X_test):
+            return np.full(len(test_rows), self.value)
+
+    logs = pd.DataFrame(
+        {LOG_TYPE_COLUMN: list(PRE_OUTCOME_LOG_TYPES) + list(OUTCOME_LOG_TYPES)}
+    )
+    result = run_protocol(
+        [FeatureMethod()],
+        bench=bench,
+        feature_builder=InspectingBuilder(),
+        logs=logs,
+        data_dir=DATA_DIR,
+    )
+
+    assert not result.failures
+    assert result.manifest["n_logs_in"] == 5
+    assert result.manifest["n_logs_used"] == 3
+
+
+def test_duplicate_method_names_fail_before_predictions_are_created(bench):
+    with pytest.raises(ValueError, match="unique"):
+        run_protocol([ZeroEffect(), ZeroEffect()], bench=bench, data_dir=DATA_DIR)
+
+
+def test_feature_method_must_declare_manifest_config(bench):
+    class UndeclaredFeatureMethod:
+        name = "UNDECLARED_FEATURE_METHOD"
+        requires_features = True
+
+        def fit(self, train_rows, X_train, target):
+            pass
+
+        def predict(self, test_rows, X_test):
+            return np.zeros(len(test_rows))
+
+    with pytest.raises(ValueError, match="must expose a JSON-serializable"):
+        run_protocol(
+            [UndeclaredFeatureMethod()],
+            bench=bench,
+            data_dir=DATA_DIR,
+        )
+
+
+def test_feature_failure_does_not_remove_feature_free_baselines(bench):
+    class BrokenBuilder(FeatureBuilder):
+        name = "BROKEN_BUILDER"
+
+        def fit(self, train_rows, logs=None):
+            raise RuntimeError("deliberate feature failure")
+
+        def transform(self, rows, logs=None):
+            raise AssertionError("transform must not run after fit fails")
+
+    class FeatureMethod:
+        name = "FEATURE_METHOD"
+        requires_features = True
+
+        def fit(self, train_rows, X_train, target):
+            pass
+
+        def predict(self, test_rows, X_test):
+            return np.zeros(len(test_rows))
+
+        def get_config(self):
+            return {}
+
+    result = run_protocol(
+        [ZeroEffect(), FeatureMethod()],
+        bench=bench,
+        feature_builder=BrokenBuilder(),
+        data_dir=DATA_DIR,
+    )
+
+    assert len(result.failures) == 15
+    assert result.predictions["ZERO_EFFECT"].notna().all()
+    assert result.predictions["FEATURE_METHOD"].isna().all()
+    table = result.results_table.set_index("method")
+    assert table.loc["ZERO_EFFECT", "n_missing"] == 0
+    assert table.loc["FEATURE_METHOD", "n_missing"] == N_BENCHMARK_ROWS
+
+
+def test_feature_builder_state_is_isolated_between_folds(bench):
+    class SingleFitBuilder(FeatureBuilder):
+        name = "SINGLE_FIT_BUILDER"
+
+        def __init__(self):
+            self.fit_calls = 0
+
+        def get_config(self):
+            return {"n_features": 1}
+
+        def fit(self, train_rows, logs=None):
+            self.fit_calls += 1
+            if self.fit_calls > 1:
+                raise RuntimeError("builder state crossed a fold boundary")
+            return self
+
+        def transform(self, rows, logs=None):
+            features = pd.DataFrame({"constant_feature": np.ones(len(rows))})
+            return self.check_output(features, rows)
+
+    class FeatureMethod:
+        name = "FEATURE_METHOD"
+        requires_features = True
+
+        def fit(self, train_rows, X_train, target):
+            self.value = float(train_rows[target].mean())
+
+        def predict(self, test_rows, X_test):
+            return np.full(len(test_rows), self.value)
+
+        def get_config(self):
+            return {"model": "constant"}
+
+    prototype = SingleFitBuilder()
+    result = run_protocol(
+        [FeatureMethod()],
+        bench=bench,
+        feature_builder=prototype,
+        data_dir=DATA_DIR,
+    )
+
+    assert not result.failures
+    assert result.predictions["FEATURE_METHOD"].notna().all()
+    assert prototype.fit_calls == 0
+
+
+def test_method_state_is_isolated_between_folds(bench):
+    class SingleFitMethod:
+        name = "SINGLE_FIT_METHOD"
+        requires_features = False
+
+        def __init__(self):
+            self.fit_calls = 0
+
+        def fit(self, train_rows, X_train, target):
+            self.fit_calls += 1
+            if self.fit_calls > 1:
+                raise RuntimeError("method state crossed a fold boundary")
+
+        def predict(self, test_rows, X_test):
+            return np.zeros(len(test_rows))
+
+        def get_config(self):
+            return {"prediction": 0.0}
+
+    prototype = SingleFitMethod()
+    result = run_protocol([prototype], bench=bench, data_dir=DATA_DIR)
+
+    assert not result.failures
+    assert result.predictions["SINGLE_FIT_METHOD"].notna().all()
+    assert prototype.fit_calls == 0
+
+
 def test_a_failing_method_is_recorded_not_swallowed(bench):
     class Broken:
         name = "BROKEN"
@@ -293,13 +506,34 @@ def test_placebo_preserves_the_within_year_value_multiset(bench):
         assert original == pytest.approx(shuffled)
 
 
+def test_primary_and_placebo_manifests_have_distinct_control_identity(bench):
+    seed = 20260811
+    primary = run_protocol([TrainMean()], bench=bench, data_dir=DATA_DIR)
+    placebo = run_protocol(
+        [TrainMean()], bench=placebo_targets(bench, seed=seed), data_dir=DATA_DIR
+    )
+
+    assert primary.manifest["control"] == {"type": "primary", "seed": None}
+    assert placebo.manifest["control"] == {
+        "type": "within_year_target_permutation",
+        "seed": seed,
+    }
+
+
 def test_manifest_records_what_is_needed_to_reproduce_the_run(bench):
     result = run_protocol([ZeroEffect()], bench=bench, data_dir=DATA_DIR)
     for key in (
         "commit",
+        "git_dirty",
+        "git_changed_paths",
         "target",
+        "control",
+        "n_logs_in",
+        "n_logs_used",
         "n_folds",
         "methods",
+        "method_configs",
+        "feature_builder_config",
         "bootstrap",
         "input_hashes",
         "predictions_sha256",
@@ -307,3 +541,7 @@ def test_manifest_records_what_is_needed_to_reproduce_the_run(bench):
         assert key in result.manifest
     assert result.manifest["n_folds"] == 15
     assert result.manifest["input_hashes_all_match"] is True
+    assert result.manifest["control"] == {"type": "primary", "seed": None}
+    assert result.manifest["n_logs_in"] == 0
+    assert result.manifest["n_logs_used"] == 0
+    assert result.manifest["method_configs"][0]["class"].endswith(".ZeroEffect")
