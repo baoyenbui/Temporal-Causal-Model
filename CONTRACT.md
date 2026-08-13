@@ -16,8 +16,10 @@ python run_option_a.py --show-folds
 python -m pytest tests/ -q
 ```
 
-That means the project already has a result table. The one remaining question is whether a
-feature-driven method beats it.
+That means the project already has a preliminary result table for the three feature-free
+baselines. The remaining gates are a leakage-safe feature representation, two prespecified
+feature-driven methods, the temporal-order negative control, and a frozen comparison with
+paired uncertainty. None of those gates is replaced by beating one baseline point estimate.
 
 ## What must not change
 
@@ -35,34 +37,50 @@ is to the frozen design, not to the test.
 
 ## Who owns what
 
-| Owner | Files | Interface to implement |
-|---|---|---|
-| Nguyen Xuan Hoa | `src/preprocessing.ipynb`, `src/causal_discovery.py`, `src/features_student.py` | Subclass `FeatureBuilder`: `fit(train_rows, logs)` then `transform(rows, logs)` |
-| Bao Yen | `src/methods_student.py`, `run_option_a.py` registration block | Implement `Method`: `fit(train_rows, X_train, target)` then `predict(test_rows, X_test)` |
-| PI | `src/option_a/**`, `tests/**` | Owns the shared layer; students do not edit it |
+The shared contract was merged to `origin/main` at
+`7cf32b360bd2354dd2dfbfe09aa640986422c3fe`. Both student branches start from that exact
+integration point and proceed in parallel. They do not add commits to the already merged
+`pi/option-a-contract` branch.
 
-Nobody edits `src/option_a/`. If it blocks you, say so and it gets changed once, for
-everyone, with the tests updated in the same move.
+| Owner | Branch | Files | Interface to implement |
+|---|---|---|---|
+| Nguyen Xuan Hoa | `student/hoa/option-a-features` | `src/preprocessing.ipynb`, `src/causal_discovery.py`, `src/features_student.py`, `tests/test_preprocessing_contract.py` | Subclass `FeatureBuilder`: `fit(train_rows, logs)` then `transform(rows, logs)`; implement the prespecified temporal-order negative control |
+| Bao Yen | `student/yen/option-a-methods` | `src/methods_student.py`, the registration block in `run_option_a.py`, `tests/test_evaluation_metrics.py` | Implement continuous-outcome `Method` classes: `fit(train_rows, X_train, target)` then `predict(test_rows, X_test)` |
+| PI/Codex | shared contract branch | `src/option_a/**`, `tests/test_option_a_contract.py` | Own and audit the shared layer; students do not edit it |
+
+Nobody edits `src/option_a/` in a student PR. If it blocks either workstream, report the
+same failing contract test to the PI; the shared layer is then changed once for everyone.
+The two students cross-review each other's bounded PRs before PI merge approval.
 
 ## Why the interface has this shape
 
-`fit` only ever receives training rows. That is what makes fold-local preprocessing the
-default rather than something to remember. The leakage currently in the notebook is hard to
-reproduce through this interface: `question_difficulty` and `student_cluster` are computed
-from `IsCorrect` across the whole dataset, and every `StandardScaler` is fitted on the whole
-dataset, so a held-out row's own outcome reaches the model that scores it.
+`fit` only receives training benchmark rows, and the protocol deep-copies a fresh builder
+and fresh method from their unfitted prototypes in every fold. That makes fold-local state
+the default. The leakage currently in the notebook is still prohibited:
+`question_difficulty` and `student_cluster` are computed from `IsCorrect` across the whole
+interaction table, and every `StandardScaler` is fitted on the whole table. These quantities
+cannot enter a held-out treatment-construct prediction unless the data source, cutoff and
+fold-local construction rule make them available before the applicable outcome.
 
 The runtime guard in `assert_no_forbidden_inputs` rejects any feature matrix carrying the
 A/B targets, the treatment and control user counts, or the checkout cell counts.
 
-One thing the guard cannot check: an aggregate computed from the interaction logs that is
-keyed by a construct held out in the current fold. Logs are pre-checkout, so using them is
-not automatically leakage, but any construct-keyed statistic must be recomputed per fold.
-Agree that rule with the PI and record it here before the frozen run.
+Interaction logs are filtered once, before fold construction. Only `Checkin`,
+`CheckinRetry`, and `Lesson` rows are permitted as pre-outcome inputs. `Checkout` and
+`CheckoutRetry` rows are outcomes from which `ate_k_1__` is calculated and must never reach
+`FeatureBuilder`; an unknown `Type` stops the run for PI classification. Construct-keyed
+statistics may use only the filtered pre-outcome table. Fold-locality does not rescue a
+question-construct statistic computed from checkout rows because question constructs do
+not align with the treatment-construct fold key. The run manifest records `n_logs_in` and
+`n_logs_used`; on the frozen snapshot these must be 641,490 and 563,117 respectively.
+
+Each student component must expose a JSON-serializable `get_config()` containing its
+constructor settings. Toy or random features may appear only in deterministic unit-test
+fixtures. They must not be used to select a method, tune hyperparameters or report results.
 
 ## Wiring in your work
 
-Bao Yen, in `run_option_a.py`:
+Bao Yen, in the registration block of `run_option_a.py`:
 
 ```python
 from src.methods_student import NonTemporalSameFeatures, TemporalPrimary
@@ -79,6 +97,10 @@ then pass `feature_builder=ConstructYearFeatures()` and `logs=...` to `run_proto
 `requires_features = True` on any method that consumes `X_train` / `X_test`.
 
 Once `TEMPORAL_PRIMARY` is registered, the paired-difference table populates itself.
+Both feature-driven methods predict the continuous A/B target. The non-temporal comparator
+must use the same permissible input information and the same model-selection budget as the
+temporal method; the intended contrast is temporal order, not a classifier-versus-regressor
+or unequal-feature comparison.
 
 ## Known structural gap
 
@@ -101,13 +123,15 @@ Preliminary, not a frozen run. Primary target, out of fold:
 
 Three things follow, and all three matter more than the ranking:
 
-The bar is roughly MAE 0.134, and the target's standard deviation is 0.190. Predicting a
-single constant for all 88 rows gives 0.132. There is very little variance available to
-explain.
+The valid out-of-fold feature-free reference is approximately MAE 0.134, and the target's
+sample standard deviation is 0.190. A constant selected using all 88 target values gives an
+in-sample MAE of approximately 0.132, but that value has seen the held-out targets and is a
+descriptive quantity rather than a valid comparator.
 
-The interval is about 0.09 wide, close to two thirds of the point estimate, because there
-are only 15 resampling clusters. An improvement smaller than roughly 0.03 will not separate
-from noise no matter how the method is built.
+The marginal intervals are wide because the evaluation has only 15 treatment-construct
+clusters. Their width does not define a minimum required improvement. The prespecified
+decision evidence is the paired cluster-bootstrap difference between `TEMPORAL_PRIMARY`
+and each baseline, reported whether or not its interval contains zero.
 
 Two reported figures are artifacts and must not be quoted as findings. `ZERO_EFFECT` scores
 0.023 on sign agreement because only 2 of 88 rows have an exactly zero effect and exact zero
@@ -120,18 +144,17 @@ large effects lowers that fold's training mean, which induces anti-correlation m
 python run_option_a.py --placebo        # target permuted within year
 ```
 
-On the placebo run `YEAR_STRATIFIED_MEAN` reaches MAE 0.1278, better than any method achieves
-on the real target. Read that as a noise-floor measurement rather than a defect: for
-feature-free baselines, real and permuted targets are indistinguishable at this sample size.
-The check becomes decisive once `TEMPORAL_PRIMARY` exists. If it scores comparably on
-permuted targets, claims that the method reads experimental effect are blocked.
+On the one prespecified placebo run, `YEAR_STRATIFIED_MEAN` reaches MAE 0.1278. This is one
+negative-control realization, not an estimated noise floor or a permutation distribution.
+Once `TEMPORAL_PRIMARY` exists, comparable performance on the real and permuted targets
+blocks a claim that the model reads signal specific to the published experimental target.
 
 The negative control, independently circular-shifting within-student order before feature
 extraction, needs the feature layer and belongs to Nguyen Xuan Hoa.
 
-## A null result is a result
+## A null result must remain visible
 
 The protocol reports paired differences whether or not the interval excludes zero. An
-unfavourable outcome does not license a change of method, sample, or target. A clean
-benchmark plus an honest negative finding is publishable; a favourable number obtained by
-moving the target is not.
+unfavourable outcome does not license a change of method, sample or target. A clean
+benchmark plus an honest negative finding can support a scientifically transparent report,
+but it does not by itself establish FAIR submission readiness or acceptance potential.

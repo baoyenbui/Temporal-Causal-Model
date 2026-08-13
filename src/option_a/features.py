@@ -24,19 +24,29 @@ class FeatureBuilder:
 
     Rules the protocol enforces at runtime:
 
+    - A fresh deep copy of the builder prototype is created for every fold, so fitted
+      state cannot carry from one held-out construct to another.
     - `transform` returns one row per input row, in the same order.
     - No column may come from `FORBIDDEN_MODEL_INPUTS`: the A/B targets, the treatment and
       control user counts, the checkout cell counts, or anything derived from them.
     - Every fitted quantity is estimated in `fit` from training rows only.
 
-    One thing the protocol cannot check for you: a statistic computed from `logs` that
-    touches a construct held out in the current fold. Interaction logs are pre-checkout, so
-    using them is not automatically leakage, but any aggregate keyed by a construct must be
-    recomputed per fold. Agree the exact rule with the PI before the frozen run, and write
-    it down in CONTRACT.md rather than leaving it implicit in code.
+    Before any fold runs, the protocol filters `logs` to the prespecified pre-outcome
+    interaction types (`Checkin`, `CheckinRetry`, and `Lesson`) and fails closed on an
+    unknown type. `Checkout` and `CheckoutRetry` rows, from which the A/B target is
+    calculated, never reach a builder. Construct-keyed aggregates may use only those
+    filtered logs; fold-locality alone does not make checkout-derived statistics safe.
     """
 
     name = "FeatureBuilder"
+
+    def get_config(self) -> dict:
+        """Return JSON-serializable constructor settings for the run manifest.
+
+        Student builders with parameters must override this method. Fitted quantities do
+        not belong here; the protocol clones the unfitted prototype before every fold.
+        """
+        return {}
 
     def fit(self, train_rows: pd.DataFrame, logs: Optional[pd.DataFrame] = None) -> "FeatureBuilder":
         raise NotImplementedError(
