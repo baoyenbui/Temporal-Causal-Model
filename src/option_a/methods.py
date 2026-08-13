@@ -21,6 +21,18 @@ class Method(Protocol):
     `fit` sees training rows only. `predict` sees the held-out rows only. Anything learned
     from the data — a mean, a scaler, an encoder, a difficulty table — is estimated inside
     `fit`, so a held-out treatment construct cannot influence its own prediction.
+
+    Set `requires_features = True` to receive `X_train` / `X_test` from the FeatureBuilder.
+    Doing so also makes `get_config()` mandatory: the protocol refuses to run a
+    feature-driven method whose configuration it cannot record, because a manifest that
+    omits the configuration cannot reproduce the run. Return a small JSON-serializable dict
+    of the settings chosen before fitting, never fitted state:
+
+        def get_config(self):
+            return {"model": "ridge", "alpha": 1.0}
+
+    A scikit-learn-style `get_params(deep=False)` is accepted instead. The three
+    feature-free baselines below are exempt, since they have nothing to configure.
     """
 
     name: str
@@ -38,6 +50,10 @@ class Method(Protocol):
         test_rows: pd.DataFrame,
         X_test: Optional[pd.DataFrame],
     ) -> np.ndarray: ...
+
+    def get_config(self) -> dict:
+        """Required when `requires_features` is True; see the class docstring."""
+        ...
 
 
 class ZeroEffect:
