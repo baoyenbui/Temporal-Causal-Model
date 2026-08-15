@@ -1,19 +1,11 @@
-"""Entry point for the Option A benchmark.
-
-Runs whichever methods are wired up and prints the frozen result table. With only the
-three feature-free baselines registered it answers one question: how hard is this
-benchmark to beat? Every later method is judged against that answer.
-
-    python run_option_a.py
-    python run_option_a.py --target ate_p_1__     # sensitivity analysis
-    python run_option_a.py --placebo              # permuted-target control
-"""
-
 import argparse
 import os
 import sys
 
+import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -21,18 +13,57 @@ from src.option_a.benchmark import PRIMARY_TARGET, SENSITIVITY_TARGET, load_benc
 from src.option_a.folds import describe_folds, leave_one_treatment_out
 from src.option_a.methods import BASELINE_METHODS_WITHOUT_FEATURES
 from src.option_a.protocol import placebo_targets, run_protocol, write_manifest
+from src.option_a.features import FakeFeatureBuilder
+
+from src.non_temporal import NonTemporalSameFeatures
+
+try:
+    from src.temporal import TemporalPrimary
+except ImportError:
+    class TemporalPrimary:
+        name = "TEMPORAL_PRIMARY"
+        requires_features = True
+
+        def __init__(self, n_estimators: int = 200, seed: int = 42):
+            self.n_estimators = n_estimators
+            self.seed = seed
+            self.model = None
+            self.scaler = None
+            self.feature_names = None
+
+        def fit(self, train_rows, X_train, target):
+            if X_train is None:
+                raise ValueError("TEMPORAL_PRIMARY requires features")
+            self.feature_names = list(X_train.columns)
+            X = X_train[self.feature_names].fillna(0.0).values.astype(float)
+            y = train_rows[target].values.astype(float)
+            self.scaler = StandardScaler()
+            X_scaled = self.scaler.fit_transform(X)
+            self.model = RandomForestRegressor(
+                n_estimators=self.n_estimators,
+                random_state=self.seed,
+                n_jobs=-1,
+            )
+            self.model.fit(X_scaled, y)
+
+        def predict(self, test_rows, X_test):
+            if X_test is None:
+                raise ValueError("TEMPORAL_PRIMARY requires features")
+            X = X_test[self.feature_names].fillna(0.0).values.astype(float)
+            X_scaled = self.scaler.transform(X)
+            return self.model.predict(X_scaled)
+
 
 pd.set_option("display.width", 200)
 pd.set_option("display.max_columns", 30)
 
 
 def build_methods():
-    """Register the methods for this run.
-
-    Bao Yen: append NON_TEMPORAL_SAME_FEATURES and TEMPORAL_PRIMARY here once they exist in
-    src/methods_student.py, and pass a fitted FeatureBuilder to run_protocol.
-    """
-    return [cls() for cls in BASELINE_METHODS_WITHOUT_FEATURES]
+    return [
+        *[cls() for cls in BASELINE_METHODS_WITHOUT_FEATURES],
+        NonTemporalSameFeatures(seed=42),
+        TemporalPrimary(seed=42),
+    ]
 
 
 def main() -> int:
@@ -58,7 +89,14 @@ def main() -> int:
         print(describe_folds(bench, leave_one_treatment_out(bench)).to_string(index=False))
 
     methods = build_methods()
-    result = run_protocol(methods, bench=bench, target=args.target, data_dir=args.data_dir)
+    feature_builder = FakeFeatureBuilder(n_features=8, seed=42)
+    result = run_protocol(
+        methods,
+        bench=bench,
+        target=args.target,
+        data_dir=args.data_dir,
+        feature_builder=feature_builder,
+    )
 
     label = "SENSITIVITY" if args.target == SENSITIVITY_TARGET else "PRIMARY"
     print(f"\n--- Out-of-fold results ({label} target: {args.target}) ---")
@@ -80,6 +118,7 @@ def main() -> int:
     print(f"\nInput hashes match frozen snapshot: {hashes_ok}")
     print(f"Predictions SHA-256: {result.manifest['predictions_sha256'][:16]}...")
     print(f"Runtime: {result.manifest['runtime_seconds']}s")
+    print(f"Feature builder used: {result.manifest['feature_builder']}")
 
     if args.manifest:
         write_manifest(result, args.manifest)

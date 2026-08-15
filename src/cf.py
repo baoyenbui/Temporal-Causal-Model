@@ -29,9 +29,10 @@ DEFAULT_NON_ACTIONABLE = {
 }
 
 DEFAULT_CF_SCORE_WEIGHTS = {
-    'flip_success_rate': 0.50,
-    'normalized_effect': 0.30,
-    'feasibility': 0.20
+    'proximity': 0.25,
+    'sparsity': 0.25,
+    'effect_snr': 0.30,
+    'causal_plausibility': 0.20
 }
 
 
@@ -142,13 +143,16 @@ class Layer3CounterfactualExplanation:
 
     def compute_cf_score(self, metrics: Dict, weights: Optional[Dict[str, float]] = None) -> float:
         w = weights or DEFAULT_CF_SCORE_WEIGHTS
-        flip = float(np.clip(metrics.get('flip_success_rate', 0.0), 0.0, 1.0))
-        norm_effect = float(np.clip(metrics.get('normalized_effect', 0.0), 0.0, 1.0))
-        feasibility = float(np.clip(metrics.get('feasibility_score', 1.0 if metrics.get('is_feasible', True) else 0.5), 0.0, 1.0))
+        proximity = metrics['proximity']
+        proximity_score = 1.0 / (1.0 + proximity) if np.isfinite(proximity) else 0.0
+        sparsity_score = 1.0 / max(metrics['sparsity'], 1)
+        snr = metrics['effect_snr']
+        snr_score = snr / (1.0 + snr) if np.isfinite(snr) and snr >= 0 else 0.0
         score = (
-            w['flip_success_rate'] * flip +
-            w['normalized_effect'] * norm_effect +
-            w['feasibility'] * feasibility
+            w['proximity'] * proximity_score +
+            w['sparsity'] * sparsity_score +
+            w['effect_snr'] * snr_score +
+            w['causal_plausibility'] * metrics['causal_plausibility']
         )
         return float(np.clip(score, 0.0, 1.0))
 
@@ -206,18 +210,6 @@ class Layer3CounterfactualExplanation:
 
         return layer1_builder.extract_window_features(intervened)
 
-    def _effect_snr(self, delta: float, estimated_effect: float, source_max_step: float,
-                     n_trials: int = 200, seed: int = 42) -> float:
-        if np.isfinite(source_max_step) and source_max_step > 0:
-            noise_std = source_max_step / 1.645
-        else:
-            noise_std = abs(delta) * 0.1 + 1e-6
-        rng = np.random.default_rng(seed)
-        noisy_deltas = rng.normal(delta, noise_std, n_trials)
-        outcome_spread = np.std(noisy_deltas * estimated_effect)
-        expected_move = abs(delta * estimated_effect) + 1e-6
-        return float(expected_move / (outcome_spread + 1e-6))
-
     def evaluate_counterfactual(
         self,
         current_target_value: float,
@@ -229,11 +221,11 @@ class Layer3CounterfactualExplanation:
         direction: str,
         source_std: float,
         source_max_step: float,
-        max_possible_effect: float = 0.0,
         n_trials: int = 200,
         seed: int = 42
     ) -> Dict:
         sparsity = 1
+
         proximity = abs(delta) / source_std if source_std and source_std > 0 else float('nan')
         snr = self._effect_snr(delta, estimated_effect, source_max_step, n_trials=n_trials, seed=seed)
 
@@ -244,8 +236,6 @@ class Layer3CounterfactualExplanation:
         rng = np.random.default_rng(seed)
         noisy_deltas = rng.normal(delta, noise_std, n_trials)
         simulated_target = current_target_value + noisy_deltas * estimated_effect
-
-        effect = delta * estimated_effect
         if direction == 'increase':
             flips = simulated_target >= threshold
             prob_improvement = float(np.mean(noisy_deltas * estimated_effect > 0))
@@ -253,14 +243,6 @@ class Layer3CounterfactualExplanation:
             flips = simulated_target <= threshold
             prob_improvement = float(np.mean(noisy_deltas * estimated_effect < 0))
         flip_success_rate = float(np.mean(flips))
-
-        if max_possible_effect > 1e-9:
-            normalized_effect = float(np.clip(abs(effect) / max_possible_effect, 0.0, 1.0))
-        else:
-            normalized_effect = float(np.clip(abs(effect) / (abs(threshold - current_target_value) + 1e-6), 0.0, 1.0))
-
-        is_feasible = abs(delta) <= (source_max_step + 1e-9) if np.isfinite(source_max_step) else True
-        feasibility_score = 1.0 if is_feasible else 0.5
 
         actionable_vars = self.identify_actionable_variables(verbose=False)
         causal_plausibility = (1.0 / hops) * (1.0 if source in actionable_vars else 0.0)
@@ -271,9 +253,6 @@ class Layer3CounterfactualExplanation:
             'effect_snr': snr,
             'flip_success_rate': flip_success_rate,
             'prob_improvement': prob_improvement,
-            'normalized_effect': normalized_effect,
-            'is_feasible': is_feasible,
-            'feasibility_score': feasibility_score,
             'causal_plausibility': causal_plausibility
         }
 
@@ -314,26 +293,6 @@ class Layer3CounterfactualExplanation:
                       f"the discovered DAG offers no valid lever for this outcome.")
             return [], current_value
 
-        max_possible = 0.0
-        for path_info in paths:
-            effect = path_info['estimated_effect']
-            if abs(effect) < 1e-9:
-                continue
-            source = path_info['source']
-            lo, hi = self.get_valid_range(source)
-            max_step = self.get_max_step_delta(source)
-            source_current = self.get_current_state(source)
-            if source_current < lo or source_current > hi or not np.isfinite(max_step) or max_step <= 0:
-                continue
-            wanted_sign = 1.0 if direction == 'increase' else -1.0
-            push_sign = wanted_sign if effect > 0 else -wanted_sign
-            raw_delta = push_sign * max_step
-            proposed = float(np.clip(source_current + raw_delta, lo, hi))
-            actual_delta = proposed - source_current
-            ach = abs(actual_delta * effect)
-            if ach > max_possible:
-                max_possible = ach
-
         candidates = []
         for path_info in paths:
             effect = path_info['estimated_effect']
@@ -370,8 +329,7 @@ class Layer3CounterfactualExplanation:
                 threshold=threshold,
                 direction=direction,
                 source_std=self.agg_df[source].std(),
-                source_max_step=max_step,
-                max_possible_effect=max_possible
+                source_max_step=max_step
             )
 
             projected_value = current_value + actual_delta * effect
@@ -380,12 +338,15 @@ class Layer3CounterfactualExplanation:
             )
             feasibility_gap = (threshold - projected_value) if direction == 'increase' else (projected_value - threshold)
 
-            status = 'feasible' if reaches_threshold_before_noise else 'infeasible'
-            if verbose and not reaches_threshold_before_noise:
-                print(f"Note: '{source}' is bound-constrained — within the realistic step limit "
-                      f"(max_step={max_step:.3f}), the best deterministic change only moves the target to "
-                      f"{projected_value:.3f}, short of threshold={threshold:.3f} by {feasibility_gap:.3f}. "
-                      f"Feasibility gap is reported only; cf_score is not zeroed.")
+            if reaches_threshold_before_noise:
+                status = 'feasible'
+            else:
+                status = 'infeasible'
+                if verbose:
+                    print(f"Note: '{source}' is bound-constrained — within the realistic step limit "
+                          f"(max_step={max_step:.3f}), the best deterministic change only moves the target to "
+                          f"{projected_value:.3f}, short of threshold={threshold:.3f} by {feasibility_gap:.3f}. "
+                          f"This is reported as a feasibility gap, not used to zero out cf_score.")
 
             cf_score = self.compute_cf_score(metrics)
 
@@ -414,35 +375,53 @@ class Layer3CounterfactualExplanation:
                     print(f"Caution: proposed change to '{c['source_variable']}' is {c['proximity']:.1f}x its typical "
                           f"day-to-day standard deviation — a large, less realistic intervention.")
 
+        if min_flip_success_rate > 0:
+            filtered = [c for c in candidates if c['flip_success_rate'] >= min_flip_success_rate]
+            if verbose and len(filtered) < len(candidates):
+                print(f"Hard filter: dropped {len(candidates) - len(filtered)} candidate(s) with "
+                      f"flip_success_rate < {min_flip_success_rate}")
+            candidates = filtered
+
         return candidates, current_value
+
+    @staticmethod
+    def _filter_reliable(candidates: List[Dict], reliability_cutoff: float) -> List[Dict]:
+        if not candidates or reliability_cutoff <= 0:
+            return candidates
+        reliable = [c for c in candidates if c.get('prob_improvement', c.get('flip_success_rate', 0)) >= reliability_cutoff]
+        return reliable if reliable else candidates
 
     @staticmethod
     def select_current_weighted_score(candidates: List[Dict], reliability_cutoff: float = 0.0) -> Optional[Dict]:
         if not candidates:
             return None
-        ranked = sorted(candidates, key=lambda r: -r['cf_score'])
+        pool = Layer3CounterfactualExplanation._filter_reliable(candidates, reliability_cutoff)
+        ranked = sorted(pool, key=lambda r: -r['cf_score'])
         return ranked[0]
 
     @staticmethod
     def select_random_feasible(candidates: List[Dict], rng: np.random.Generator, reliability_cutoff: float = 0.0) -> Optional[Dict]:
         if not candidates:
             return None
-        idx = int(rng.integers(0, len(candidates)))
-        return candidates[idx]
+        pool = Layer3CounterfactualExplanation._filter_reliable(candidates, reliability_cutoff)
+        idx = int(rng.integers(0, len(pool)))
+        return pool[idx]
 
     @staticmethod
     def select_min_standardized_change(candidates: List[Dict], reliability_cutoff: float = 0.0) -> Optional[Dict]:
         if not candidates:
             return None
-        finite = [c for c in candidates if np.isfinite(c.get('proximity', np.nan))]
-        pool = finite if finite else candidates
+        pool = Layer3CounterfactualExplanation._filter_reliable(candidates, reliability_cutoff)
+        finite = [c for c in pool if np.isfinite(c['proximity'])]
+        pool = finite if finite else pool
         return min(pool, key=lambda c: c['proximity'])
 
     @staticmethod
     def select_max_predicted_move(candidates: List[Dict], reliability_cutoff: float = 0.0) -> Optional[Dict]:
         if not candidates:
             return None
-        return max(candidates, key=lambda c: abs(c['estimated_target_change']))
+        pool = Layer3CounterfactualExplanation._filter_reliable(candidates, reliability_cutoff)
+        return max(pool, key=lambda c: abs(c['estimated_target_change']))
 
     def generate_counterfactual(
         self,
@@ -458,6 +437,18 @@ class Layer3CounterfactualExplanation:
             return []
         ranked = sorted(candidates, key=lambda r: -r['cf_score'])
         return ranked[:top_k]
+
+    def _effect_snr(self, delta: float, estimated_effect: float, source_max_step: float,
+                     n_trials: int = 200, seed: int = 42) -> float:
+        if np.isfinite(source_max_step) and source_max_step > 0:
+            noise_std = source_max_step / 1.645
+        else:
+            noise_std = abs(delta) * 0.1 + 1e-6
+        rng = np.random.default_rng(seed)
+        noisy_deltas = rng.normal(delta, noise_std, n_trials)
+        outcome_spread = np.std(noisy_deltas * estimated_effect)
+        expected_move = abs(delta * estimated_effect) + 1e-6
+        return float(expected_move / (outcome_spread + 1e-6))
 
     def simulate_max_feasible_effect(
         self,
@@ -540,7 +531,7 @@ class Layer3CounterfactualExplanation:
             return []
 
         max_abs_change = max(abs(r['achievable_change']) for r in feasible)
-        w = weights or {'normalized_effect': 0.40, 'efficiency': 0.30, 'effect_snr': 0.20, 'causal_plausibility': 0.10}
+        w = weights or {'normalized_effect': 0.30, 'efficiency': 0.25, 'effect_snr': 0.25, 'causal_plausibility': 0.20}
         actionable_vars = self.identify_actionable_variables(verbose=False)
 
         scored = []
@@ -885,30 +876,6 @@ class Layer3CounterfactualExplanation:
                 })
                 continue
 
-            max_possible = 0.0
-            for path_info in paths:
-                effect = path_info['estimated_effect']
-                if abs(effect) < 1e-9:
-                    continue
-                source = path_info['source']
-                source_col = self._layer1_col(source)
-                if source_col not in user_windows.columns:
-                    continue
-                window_count = min(self.current_state_window, len(user_windows))
-                source_current = float(user_windows[source_col].tail(window_count).median())
-                lo, hi = self.get_valid_range_from_windows(layer1_df, source_col)
-                max_step = self.get_max_step_delta_from_windows(layer1_df, source_col)
-                if source_current < lo or source_current > hi or not np.isfinite(max_step) or max_step <= 0:
-                    continue
-                wanted_sign = 1.0 if direction == 'increase' else -1.0
-                push_sign = wanted_sign if effect > 0 else -wanted_sign
-                raw_delta = push_sign * max_step
-                proposed = float(np.clip(source_current + raw_delta, lo, hi))
-                actual_delta = proposed - source_current
-                ach = abs(actual_delta * effect)
-                if ach > max_possible:
-                    max_possible = ach
-
             best = None
             for path_info in paths:
                 effect = path_info['estimated_effect']
@@ -944,8 +911,7 @@ class Layer3CounterfactualExplanation:
                     threshold=threshold,
                     direction=direction,
                     source_std=layer1_df[source_col].std(),
-                    source_max_step=max_step,
-                    max_possible_effect=max_possible
+                    source_max_step=max_step
                 )
                 projected_value = current_value + actual_delta * effect
                 reaches_threshold_before_noise = (

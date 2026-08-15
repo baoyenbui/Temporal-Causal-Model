@@ -1,13 +1,3 @@
-"""The method interface, plus the three baselines that need no features at all.
-
-`ZERO_EFFECT`, `TRAIN_MEAN` and `YEAR_STRATIFIED_MEAN` depend only on the 88-row table, so
-they are implemented here and are runnable before either student's work lands. That gives
-the project a real results table on day one and leaves exactly one open question: whether
-a feature-driven method beats them.
-
-`NON_TEMPORAL_SAME_FEATURES` and `TEMPORAL_PRIMARY` are Bao Yen's, in `src/methods_student.py`.
-"""
-
 from typing import Optional, Protocol, runtime_checkable
 
 import numpy as np
@@ -16,25 +6,6 @@ import pandas as pd
 
 @runtime_checkable
 class Method(Protocol):
-    """Contract every Option A method implements.
-
-    `fit` sees training rows only. `predict` sees the held-out rows only. Anything learned
-    from the data — a mean, a scaler, an encoder, a difficulty table — is estimated inside
-    `fit`, so a held-out treatment construct cannot influence its own prediction.
-
-    Set `requires_features = True` to receive `X_train` / `X_test` from the FeatureBuilder.
-    Doing so also makes `get_config()` mandatory: the protocol refuses to run a
-    feature-driven method whose configuration it cannot record, because a manifest that
-    omits the configuration cannot reproduce the run. Return a small JSON-serializable dict
-    of the settings chosen before fitting, never fitted state:
-
-        def get_config(self):
-            return {"model": "ridge", "alpha": 1.0}
-
-    A scikit-learn-style `get_params(deep=False)` is accepted instead. The three
-    feature-free baselines below are exempt, since they have nothing to configure.
-    """
-
     name: str
     requires_features: bool
 
@@ -51,18 +22,8 @@ class Method(Protocol):
         X_test: Optional[pd.DataFrame],
     ) -> np.ndarray: ...
 
-    def get_config(self) -> dict:
-        """Required when `requires_features` is True; see the class docstring."""
-        ...
-
 
 class ZeroEffect:
-    """Predict no effect for every row.
-
-    The reference point that matters most: a method that cannot beat it has not shown that
-    it carries any information about effect magnitude.
-    """
-
     name = "ZERO_EFFECT"
     requires_features = False
 
@@ -74,8 +35,6 @@ class ZeroEffect:
 
 
 class TrainMean:
-    """Predict the training-fold mean of the target."""
-
     name = "TRAIN_MEAN"
     requires_features = False
 
@@ -92,13 +51,6 @@ class TrainMean:
 
 
 class YearStratifiedMean:
-    """Predict the training-fold mean for the row's year, falling back to the global mean.
-
-    Year 5 has 2 rows and Year 10 has 9 in the full sample, so some folds leave a year with
-    no training support. Every fallback is counted rather than hidden, because a baseline
-    that is silently the global mean most of the time is not a year-stratified baseline.
-    """
-
     name = "YEAR_STRATIFIED_MEAN"
     requires_features = False
 

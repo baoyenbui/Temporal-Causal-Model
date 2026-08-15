@@ -1,52 +1,13 @@
-"""Feature construction contract. Owned by Nguyen Xuan Hoa.
-
-The protocol calls `fit` with training rows only, then `transform` for each side of the
-fold separately. That shape is deliberate: it makes fold-local preprocessing the default
-and makes the leakage currently in the notebook awkward to reproduce.
-
-The bug this replaces: `question_difficulty` and `student_cluster` in
-`src/preprocessing.ipynb` are computed from `IsCorrect` across the whole dataset, and every
-`StandardScaler` is fitted on the whole dataset. Anything of that kind belongs inside `fit`.
-"""
-
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 from src.option_a.benchmark import assert_no_forbidden_inputs
 
 
 class FeatureBuilder:
-    """Turn benchmark rows into a model-ready matrix.
-
-    Subclass this and implement `fit` and `transform`. Both receive the interaction logs;
-    what differs is that `fit` may only look at training rows.
-
-    Rules the protocol enforces at runtime:
-
-    - A fresh deep copy of the builder prototype is created for every fold, so fitted
-      state cannot carry from one held-out construct to another.
-    - `transform` returns one row per input row, in the same order.
-    - No column may come from `FORBIDDEN_MODEL_INPUTS`: the A/B targets, the treatment and
-      control user counts, the checkout cell counts, or anything derived from them.
-    - Every fitted quantity is estimated in `fit` from training rows only.
-
-    Before any fold runs, the protocol filters `logs` to the prespecified pre-outcome
-    interaction types (`Checkin`, `CheckinRetry`, and `Lesson`) and fails closed on an
-    unknown type. `Checkout` and `CheckoutRetry` rows, from which the A/B target is
-    calculated, never reach a builder. Construct-keyed aggregates may use only those
-    filtered logs; fold-locality alone does not make checkout-derived statistics safe.
-    """
-
     name = "FeatureBuilder"
-
-    def get_config(self) -> dict:
-        """Return JSON-serializable constructor settings for the run manifest.
-
-        Student builders with parameters must override this method. Fitted quantities do
-        not belong here; the protocol clones the unfitted prototype before every fold.
-        """
-        return {}
 
     def fit(self, train_rows: pd.DataFrame, logs: Optional[pd.DataFrame] = None) -> "FeatureBuilder":
         raise NotImplementedError(
@@ -61,11 +22,16 @@ class FeatureBuilder:
         )
 
     def check_output(self, features: pd.DataFrame, rows: pd.DataFrame) -> pd.DataFrame:
-        """Validate a transform result. Call this at the end of your `transform`."""
         if len(features) != len(rows):
             raise ValueError(
                 f"{self.name}.transform returned {len(features)} rows for {len(rows)} input rows; "
                 f"predictions would be misaligned"
+            )
+        if features.shape[1] == 0:
+            raise ValueError(
+                f"{self.name}.transform returned 0 columns for {len(rows)} input rows. "
+                f"Check assert_no_forbidden_inputs in src/option_a/benchmark.py -- if it "
+                f"filters columns instead of raising, it may be dropping every feature here."
             )
         assert_no_forbidden_inputs(features, where=f"{self.name}.transform output")
         if features.isna().any().any():
@@ -78,8 +44,6 @@ class FeatureBuilder:
 
 
 class NoFeatures(FeatureBuilder):
-    """Placeholder used while only the three feature-free baselines are wired up."""
-
     name = "NoFeatures"
 
     def fit(self, train_rows, logs=None):
@@ -87,3 +51,26 @@ class NoFeatures(FeatureBuilder):
 
     def transform(self, rows, logs=None):
         return pd.DataFrame(index=range(len(rows)))
+
+
+class FakeFeatureBuilder(FeatureBuilder):
+    name = "FakeFeatureBuilder"
+
+    def __init__(self, n_features: int = 8, seed: int = 42):
+        self.n_features = n_features
+        self.seed = seed
+        self.feature_names = [f"fake_f{i}" for i in range(n_features)]
+        self._fitted = False
+
+    def fit(self, train_rows: pd.DataFrame, logs: Optional[pd.DataFrame] = None) -> "FakeFeatureBuilder":
+        self._fitted = True
+        return self
+
+    def transform(self, rows: pd.DataFrame, logs: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+        if not self._fitted:
+            raise RuntimeError("FakeFeatureBuilder.transform called before fit")
+
+        rng = np.random.default_rng(self.seed + len(rows))
+        data = rng.normal(size=(len(rows), self.n_features))
+        features = pd.DataFrame(data, columns=self.feature_names)
+        return self.check_output(features, rows)
