@@ -16,7 +16,7 @@ import pandas as pd
 from sklearn.linear_model import Ridge
 
 from src.features_student import ConstructYearFeatures
-from src.option_a.benchmark import PRIMARY_TARGET, load_benchmark
+from src.option_a.benchmark import PRIMARY_TARGET, filter_pre_outcome, load_benchmark
 from src.option_a.methods import BASELINE_METHODS_WITHOUT_FEATURES
 from src.option_a.protocol import run_protocol
 
@@ -31,6 +31,9 @@ class RidgeOnConstructYearFeatures:
     def __init__(self) -> None:
         self.model = Ridge(alpha=1.0)
 
+    def get_config(self) -> dict:
+        return {"alpha": self.model.alpha}
+
     def fit(self, train_rows, X_train, target) -> None:
         self.model.fit(X_train.to_numpy(), train_rows[target].to_numpy())
 
@@ -41,6 +44,14 @@ class RidgeOnConstructYearFeatures:
 def main() -> None:
     print("Loading real logs (data/checkins_lessons_checkouts_training.csv)...")
     logs = pd.read_csv("data/checkins_lessons_checkouts_training.csv")
+
+    n_before = len(logs)
+    logs = filter_pre_outcome(logs)
+    n_after = len(logs)
+    print(f"filter_pre_outcome: {n_before} rows in, {n_after} pre-outcome rows kept "
+          f"({n_before - n_after} outcome/other rows dropped)")
+    print(f"Type values remaining: {sorted(logs['Type'].unique())}")
+
     bench = load_benchmark(data_dir="data")
 
     methods = [cls() for cls in BASELINE_METHODS_WITHOUT_FEATURES] + [RidgeOnConstructYearFeatures()]
