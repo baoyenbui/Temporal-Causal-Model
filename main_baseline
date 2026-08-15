@@ -1,0 +1,166 @@
+import sys
+import os
+import matplotlib
+matplotlib.use('Agg')
+import pandas as pd
+import networkx as nx
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+from nbformat import read
+import warnings
+warnings.filterwarnings('ignore')
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from src.baseline import (
+    build_nontemporal_features,
+    split_by_user,
+    bootstrap_directlingam,
+    identify_actionable_upstream,
+    train_success_classifier,
+    generate_baseline_counterfactuals,
+    NODE_FEATURES,
+    TARGET_COL
+)
+
+clean_main_df: pd.DataFrame
+
+with open("src/preprocessing.ipynb", "r", encoding="utf-8") as f:
+    notebook = read(f, as_version=4)
+
+exec_globals = globals()
+for i, cell in enumerate(notebook.cells):
+    if cell.cell_type == "code":
+        try:
+            exec(cell.source, exec_globals)
+        except Exception as e:
+            print(f"preprocessing.ipynb cell {i} failed: {type(e).__name__}: {e}")
+            raise
+
+
+FEATURE_LABELS = {
+    'rolling_success_rate': "Recent Success Rate",
+    'engagement_proxy_scaled': "Engagement",
+    'time_delta': "Response Time",
+    'step_index_scaled': "Progress Index",
+    'question_difficulty': "Question Difficulty",
+    'student_cluster': "Learner Group",
+    'content_group': "Content Group",
+}
+
+
+def humanize_feature_name(name: str) -> str:
+    return FEATURE_LABELS.get(name, name)
+
+
+def plot_baseline_graph(stable_edges_df: pd.DataFrame, output_path: str = "output/baseline_causal_graph.png"):
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    if stable_edges_df is None or len(stable_edges_df) == 0:
+        print("No stable edges to plot")
+        return
+
+    G = nx.DiGraph()
+    for _, row in stable_edges_df.iterrows():
+        src = humanize_feature_name(str(row['source']))
+        tgt = humanize_feature_name(str(row['target']))
+        strength = float(row.get('mean_strength', 0.0))
+        stability = float(row.get('stability', 0.0))
+        G.add_edge(src, tgt, strength=strength, stability=stability)
+
+    pos = nx.spring_layout(G, k=2.8, iterations=100, seed=42)
+    fig = plt.figure(figsize=(18, 12))
+    node_colors = ['#FF6B6B' if G.in_degree(n) == 0 else '#4ECDC4' for n in G.nodes()]
+
+    nx.draw_networkx_nodes(G, pos, node_size=2800, node_color=node_colors, alpha=0.95,
+                           edgecolors='black', linewidths=1.5)
+    nx.draw_networkx_labels(G, pos, font_size=10, font_weight='bold')
+
+    edge_widths = [max(1.0, abs(d['strength']) * 6) for _, _, d in G.edges(data=True)]
+    edge_colors = ['#E74C3C' if d['strength'] < 0 else '#3498DB' for _, _, d in G.edges(data=True)]
+
+    nx.draw_networkx_edges(G, pos, edge_color=edge_colors, width=edge_widths,
+                           arrows=True, arrowsize=20, alpha=0.85,
+                           arrowstyle='-|>', connectionstyle='arc3,rad=0.12')
+
+    edge_labels = {}
+    for u, v, d in G.edges(data=True):
+        edge_labels[(u, v)] = f"stab={d['stability']:.2f}\nstr={d['strength']:+.2f}"
+
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels,
+                                 font_size=8, font_weight='bold',
+                                 bbox=dict(boxstyle='round,pad=0.25', facecolor='white', alpha=0.9))
+
+    legend_handles = [
+        Line2D([0], [0], color='#3498DB', lw=3, label='Positive effect'),
+        Line2D([0], [0], color='#E74C3C', lw=3, label='Negative effect'),
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='#FF6B6B', markersize=14,
+               label='Root variable'),
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='#4ECDC4', markersize=14,
+               label='Downstream variable'),
+    ]
+    plt.legend(handles=legend_handles, loc='upper left', fontsize=11, frameon=True, framealpha=0.9)
+
+    note = ("Baseline graph: DirectLiNGAM (non-temporal, pooled).\n"
+            "stab = bootstrap stability; str = mean edge strength.")
+    plt.figtext(0.5, 0.01, note, ha='center', fontsize=10, style='italic',
+                bbox=dict(boxstyle='round,pad=0.4', facecolor='#F8F9FA', edgecolor='gray'))
+
+    plt.title(f"Baseline Causal Graph (DirectLiNGAM) — {len(G.edges())} stable edges",
+              fontsize=16, fontweight='bold', pad=25)
+    plt.axis('off')
+    plt.tight_layout(rect=[0, 0.05, 1, 1])
+    plt.savefig(output_path, dpi=400, bbox_inches='tight')
+    plt.close(fig)
+    print(f"Saved graph: {output_path}")
+
+
+def main():
+    df = build_nontemporal_features(clean_main_df)
+    train_df, val_df, test_df = split_by_user(df, seed=42)
+
+    edges_df, stable_edges_df = bootstrap_directlingam(
+        train_df, n_bootstrap=20, stability_threshold=0.6, seed=42
+    )
+    if len(stable_edges_df) > 0:
+        print(stable_edges_df[['source', 'target', 'stability', 'mean_strength']].to_string(index=False))
+    plot_baseline_graph(stable_edges_df)
+
+    actionable_upstream = identify_actionable_upstream(stable_edges_df)
+    model, clf_metrics = train_success_classifier(train_df, val_df, test_df, seed=42)
+
+    cf_df = generate_baseline_counterfactuals(
+        model, train_df, test_df, actionable_cols=actionable_upstream,
+        n_instances=30, seed=42
+    )
+
+    summary = {
+        'target': TARGET_COL,
+        'graph_type': 'DirectLiNGAM (non-temporal, pooled)',
+        'n_stable_edges': len(stable_edges_df),
+        'n_actionable_upstream_vars': len(actionable_upstream),
+        'actionable_upstream_vars': actionable_upstream,
+        'classifier_accuracy': clf_metrics['accuracy'],
+        'classifier_f1_weighted': clf_metrics['f1_weighted'],
+        'classifier_auc': clf_metrics['auc'],
+        'n_cf_instances_tested': len(cf_df),
+        'flip_success_rate': float(cf_df['flip_success'].mean()) if len(cf_df) else float('nan'),
+        'mean_proba_change': float(cf_df['proba_change'].mean()) if len(cf_df) else float('nan'),
+        'mean_proximity': float(cf_df['proximity'].mean()) if len(cf_df) else float('nan'),
+        'mean_sparsity': float(cf_df['sparsity'].mean()) if len(cf_df) else float('nan'),
+        'mean_perturbation_stability': float(cf_df['perturbation_stability'].mean()) if len(cf_df) else float('nan'),
+    }
+    for k, v in summary.items():
+        print(f"{k}: {v}")
+
+    return {
+        'features_df': df,
+        'train_df': train_df, 'val_df': val_df, 'test_df': test_df,
+        'edges_df': edges_df, 'stable_edges_df': stable_edges_df,
+        'actionable_upstream': actionable_upstream,
+        'model': model, 'classifier_metrics': clf_metrics,
+        'cf_results': cf_df,
+        'summary': summary
+    }
+
+
+if __name__ == "__main__":
+    main()

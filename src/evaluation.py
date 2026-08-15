@@ -29,15 +29,6 @@ def summarize_pair_coverage(rows_df: pd.DataFrame, n_pairs_tested: int) -> Dict:
 
 
 def bootstrap_causal_graph(layer1_df: pd.DataFrame, n_bootstrap: int = 20, seed: int = 42, verbose: bool = False) -> pd.DataFrame:
-    """
-    layer1_df passed in here MUST already carry the experimental key columns
-    (TreatmentLessonConstructId, QuestionConstructId, Year) -- i.e. it should be a
-    keyed_layer1_df already filtered down to the ONE entity being reported on (matching
-    whatever agg_df / causal_graph the caller is evaluating), not the raw unkeyed Layer 1
-    output and not the multi-entity keyed_layer1_df for every entity at once. build_layer2()
-    requires those columns and will raise on every bootstrap iteration otherwise -- which,
-    with a bare except below, silently produces 0 successful runs rather than an obvious error.
-    """
     rng = np.random.default_rng(seed)
     user_ids = layer1_df['user_id'].unique()
     edge_counts = defaultdict(int)
@@ -52,52 +43,21 @@ def bootstrap_causal_graph(layer1_df: pd.DataFrame, n_bootstrap: int = 20, seed:
         )
         builder = Layer2StructureLearning(**LAYER2_KWARGS)
         try:
-            # build_layer2 now returns (causal_graphs, per_entity_agg, key_status) --
-            # causal_graphs is keyed by (Treatment, Question, Year), even when layer1_df
-            # only contains one entity's windows (then this dict has at most 1 key).
-            causal_graphs, _, key_status = builder.build_layer2(resampled)
+            _, causal_graph = builder.build_layer2(resampled)
         except Exception as e:
             if verbose:
-                print(f"Bootstrap iteration {i + 1}/{n_bootstrap}: build_layer2 failed "
-                      f"({type(e).__name__}: {e}), skipping")
+                print(f"Bootstrap iteration {i + 1}/{n_bootstrap}: failed ({type(e).__name__}: {e}), skipping")
             continue
-
-        if not causal_graphs:
-            if verbose:
-                n_insufficient = sum(1 for v in key_status.values() if v['status'] != 'ok')
-                print(f"Bootstrap iteration {i + 1}/{n_bootstrap}: no entity had enough "
-                      f"temporal density in this resample ({n_insufficient}/{len(key_status)} "
-                      f"marked insufficient_temporal_history), skipping")
-            continue
-
         successful_runs += 1
         seen_this_run = set()
-        # Loop over every entity's graph in this resample (normally just one, if the
-        # caller pre-filtered layer1_df to a single entity as documented above). Edge
-        # identity intentionally does NOT include entity_key -- if a caller passes
-        # multi-entity data here, edges from different (Treatment, Question, Year)
-        # conditions get pooled together, which conflates distinct experimental
-        # conditions. That is a caller error, not something silently corrected here.
-        for entity_key, causal_graph in causal_graphs.items():
-            for target, edges in causal_graph.items():
-                for edge in edges:
-                    key = (edge['source'], target, edge['lag'])
-                    if key in seen_this_run:
-                        continue
-                    seen_this_run.add(key)
-                    edge_counts[key] += 1
-                    edge_strengths[key].append(edge['strength'])
-
-    if not edge_counts:
-        print(f"WARNING: bootstrap_causal_graph found 0 edges across {successful_runs}/{n_bootstrap} "
-              f"successful resamples. This usually means either (a) layer1_df passed in lacks "
-              f"the experimental key columns build_layer2 requires, or (b) the entity's data is "
-              f"too sparse to survive resampling. Returning an empty but correctly-shaped "
-              f"DataFrame (with a 'stability' column) instead of crashing downstream.")
-        result_df = pd.DataFrame(columns=['source', 'target', 'lag', 'stability', 'mean_strength', 'std_strength', 'n_occurrences'])
-        result_df.attrs['successful_runs'] = successful_runs
-        result_df.attrs['n_bootstrap'] = n_bootstrap
-        return result_df
+        for target, edges in causal_graph.items():
+            for edge in edges:
+                key = (edge['source'], target, edge['lag'])
+                if key in seen_this_run:
+                    continue
+                seen_this_run.add(key)
+                edge_counts[key] += 1
+                edge_strengths[key].append(edge['strength'])
 
     rows = []
     for key, count in edge_counts.items():
@@ -377,38 +337,15 @@ def run_full_evaluation(
     n_bootstrap: int = 20,
     n_layer3_targets: int = 6,
     stability_threshold: float = 0.5,
-    max_hops: int = 2,
-    verbose_bootstrap: bool = True
+    max_hops: int = 2
 ) -> dict:
-    """
-    layer1_df here should be the keyed Layer 1 windows for the SAME entity that
-    agg_df / causal_graph represent -- see bootstrap_causal_graph's docstring. Passing the
-    full unkeyed (or multi-entity) Layer 1 dataframe makes every bootstrap resample fail
-    inside build_layer2 (missing experimental key columns / mixed entities), silently,
-    which previously surfaced only as a crash much further downstream.
-    """
-    missing_key_cols = {'TreatmentLessonConstructId', 'QuestionConstructId', 'Year'} - set(layer1_df.columns)
-    if missing_key_cols:
-        raise ValueError(
-            f"run_full_evaluation: layer1_df is missing {missing_key_cols}. Pass the keyed "
-            f"Layer 1 dataframe filtered to the single entity being evaluated (see "
-            f"bootstrap_causal_graph docstring), not the raw unkeyed Layer 1 output."
-        )
-    n_entities_present = layer1_df[['TreatmentLessonConstructId', 'QuestionConstructId', 'Year']].drop_duplicates().shape[0]
-    if n_entities_present > 1:
-        print(f"NOTE: layer1_df passed to run_full_evaluation contains {n_entities_present} distinct "
-              f"experimental entities, not 1. Bootstrap edge stability will pool edges across all of "
-              f"them -- confirm this is intended, otherwise filter to a single (Treatment, Question, "
-              f"Year) before calling.")
-
-    stability_df = bootstrap_causal_graph(layer1_df, n_bootstrap=n_bootstrap, verbose=verbose_bootstrap)
+    stability_df = bootstrap_causal_graph(layer1_df, n_bootstrap=n_bootstrap)
     layer3_df = evaluate_layer3_directions(causal_graph, agg_df, n_targets=n_layer3_targets, max_hops=max_hops)
     results_table = build_results_table(stability_df, layer3_df, stability_threshold=stability_threshold)
 
     print(results_table.to_string(index=False))
 
-    stable_edges = stability_df[stability_df['stability'] >= stability_threshold].sort_values('stability', ascending=False) \
-        if len(stability_df) > 0 else stability_df
+    stable_edges = stability_df[stability_df['stability'] >= stability_threshold].sort_values('stability', ascending=False)
     print(f"\nEdges with stability >= {stability_threshold:.0%} (safe to report as headline findings):")
     if len(stable_edges) > 0:
         print(stable_edges[['source', 'target', 'lag', 'stability', 'mean_strength']].to_string(index=False))
