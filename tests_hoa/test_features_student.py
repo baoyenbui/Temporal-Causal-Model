@@ -11,10 +11,10 @@ import pandas as pd
 import pytest
 
 from src.features_student import ConstructYearFeatures
-from src.option_a.benchmark import FORBIDDEN_MODEL_INPUTS
+from src.option_a.benchmark import FORBIDDEN_MODEL_INPUTS, filter_pre_outcome
 
 
-def make_logs(n_users=20, n_constructs=6, seed=0) -> pd.DataFrame:
+def make_logs(n_users=20, n_constructs=6, seed=0, log_type="Checkin") -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     rows = []
     start = pd.Timestamp("2022-02-01")
@@ -29,6 +29,7 @@ def make_logs(n_users=20, n_constructs=6, seed=0) -> pd.DataFrame:
                     "ConstructId": construct,
                     "IsCorrect": int(rng.random() < (0.3 + 0.1 * (construct % 3))),
                     "Timestamp": t,
+                    "Type": log_type,
                 }
             )
     return pd.DataFrame(rows)
@@ -156,3 +157,42 @@ def test_transform_before_fit_raises(logs, bench_rows):
     builder = ConstructYearFeatures()
     with pytest.raises(RuntimeError, match="before fit"):
         builder.transform(bench_rows, logs)
+
+
+def test_fit_rejects_logs_containing_checkout_rows(logs, bench_rows):
+    """Checkout/CheckoutRetry rows are outcome rows (ate_k_1__ is calculated from them) and
+    must never reach fit(), even if a caller bypasses run_protocol's own filtering."""
+    contaminated = pd.concat(
+        [logs, make_logs(n_users=3, n_constructs=6, seed=99, log_type="Checkout")],
+        ignore_index=True,
+    )
+    with pytest.raises(ValueError, match="outcome"):
+        ConstructYearFeatures().fit(bench_rows, contaminated)
+
+
+def test_difficulty_differs_between_filtered_and_unfiltered_logs(bench_rows):
+    """Demonstrates the guard is not just defensive paperwork: mixing outcome rows into the
+    statistic actually changes the number, because Checkout rows here are deliberately all
+    incorrect (IsCorrect=0), which is not representative of pre-outcome difficulty."""
+    pre_outcome = make_logs(n_users=20, n_constructs=6, seed=0, log_type="Checkin")
+
+    outcome_rows = pre_outcome.copy()
+    outcome_rows["Type"] = "Checkout"
+    outcome_rows["IsCorrect"] = 0  # all "wrong", unlike the pre-outcome distribution
+
+    mixed = pd.concat([pre_outcome, outcome_rows], ignore_index=True)
+
+    filtered = filter_pre_outcome(mixed)
+    safe_difficulty = ConstructYearFeatures().fit(bench_rows, filtered).difficulty_by_construct_
+
+    unfiltered_difficulty = 1.0 - mixed.groupby("ConstructId")["IsCorrect"].mean()
+
+    assert not np.allclose(
+        safe_difficulty.sort_index().to_numpy(),
+        unfiltered_difficulty.sort_index().to_numpy(),
+    )
+    # the filtered (safe) statistic matches computing it from pre_outcome alone
+    expected = 1.0 - pre_outcome.groupby("ConstructId")["IsCorrect"].mean()
+    pd.testing.assert_series_equal(
+        safe_difficulty.sort_index(), expected.sort_index(), check_names=False
+    )
