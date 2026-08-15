@@ -5,6 +5,7 @@ failure policy. That is what makes the comparison fair; it is enforced here rath
 trusted to each method.
 """
 
+import copy
 import hashlib
 import json
 import platform
@@ -148,6 +149,12 @@ def run_protocol(
     data_dir: str = "data",
     reference_method: str = "TEMPORAL_PRIMARY",
 ) -> RunResult:
+    """Run every method through leave-one-treatment-construct-out and score them together.
+
+    A method that raises inside a fold does not abort the run. Its rows for that fold are
+    recorded as failures and left unpredicted, so the failure is visible in the output
+    rather than being silently absorbed into a shorter evaluation sample.
+    """
     started = time.time()
 
     if bench is None:
@@ -331,6 +338,10 @@ def run_protocol(
 def _paired_differences(
     bench, predictions, methods, y_true, clusters, target, reference_method
 ) -> pd.DataFrame:
+    """MAE difference between the reference method and each other method, on shared rows.
+
+    Reported whether or not the interval excludes zero.
+    """
     names = [m.name for m in methods]
     if reference_method not in names:
         return pd.DataFrame(
@@ -363,6 +374,11 @@ def _paired_differences(
 
 
 def placebo_targets(bench: pd.DataFrame, target: str = PRIMARY_TARGET, seed: int = 20260811):
+    """Permute the target within year group, leaving everything else untouched.
+
+    A method that scores comparably here is reading structure that has nothing to do with
+    the experimental effect, which blocks evidence claims.
+    """
     rng = np.random.default_rng(seed)
     permuted = bench.copy()
     values = permuted[target].to_numpy(dtype=float).copy()
