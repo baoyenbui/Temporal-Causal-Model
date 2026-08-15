@@ -9,6 +9,9 @@ Implements the `FeatureBuilder` contract in `src/option_a/features.py`. See that
   anything new from `rows` itself (that would let a held-out row's own attributes leak into
   its own prediction).
 - No column in the FORBIDDEN_MODEL_INPUTS set, no NaNs. `check_output()` enforces both.
+- No `Checkout`/`CheckoutRetry` row may reach `fit` (checked defensively here via
+  `assert_no_outcome_rows`; `run_protocol` already filters these centrally with
+  `filter_pre_outcome` before any builder sees `logs`).
 
 Phase 1 (this file): a small, deliberately unoptimized feature set, to get a
 leakage-safe feature pipeline wired end to end before spending effort on MAE.
@@ -22,19 +25,19 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
+from src.option_a.benchmark import assert_no_outcome_rows
 from src.option_a.features import FeatureBuilder
 
 QUESTION_CONSTRUCT_KEY = "QuestionConstructId"
 YEAR_KEY = "Year"
 
-# Interaction logs are pre-checkout (CONTRACT.md), so a construct-keyed statistic computed
-# from the full logs table is not target leakage by itself: it does not depend on any row's
-# A/B outcome. What CONTRACT.md flags as the open question is narrower -- whether a
-# construct-keyed aggregate should additionally exclude interactions tied to the fold's
-# held-out TreatmentLessonConstructId on validity grounds, not a leakage grounds. This file
-# takes the permissive reading (use the full logs table) and calls it out here rather than
-# deciding it silently, per CONTRACT.md's "agree the exact rule with the PI and record it
-# here before the frozen run." Not yet agreed -- do not treat Phase 1 numbers as frozen.
+# CONTRACT.md previously left open whether a construct-keyed aggregate needed to exclude
+# interactions tied to the fold's held-out TreatmentLessonConstructId. That question is now
+# resolved centrally: run_protocol() calls filter_pre_outcome() on `logs` before any fold
+# runs and before a builder ever sees it, so only Checkin/CheckinRetry/Lesson rows reach
+# fit()/transform() -- Checkout/CheckoutRetry (from which ate_k_1__ is calculated) never do.
+# assert_no_outcome_rows() below is a second, local line of defense for the case where this
+# builder is exercised directly (e.g. in tests) rather than through run_protocol.
 MAX_RESPONSE_TIME_SECONDS = 300.0
 
 
@@ -78,6 +81,13 @@ class ConstructYearFeatures(FeatureBuilder):
         self.years_seen_: Optional[List] = None
         self.scaler_: Optional[StandardScaler] = None
 
+    def get_config(self) -> dict:
+        """Constructor settings (no fitted state) for the run manifest."""
+        return {
+            "numeric_columns": list(self.NUMERIC_COLUMNS),
+            "max_response_time_seconds": MAX_RESPONSE_TIME_SECONDS,
+        }
+
     def fit(self, train_rows: pd.DataFrame, logs: Optional[pd.DataFrame] = None) -> "ConstructYearFeatures":
         if logs is None:
             raise ValueError(f"{self.name}.fit requires interaction logs (logs=None)")
@@ -89,6 +99,7 @@ class ConstructYearFeatures(FeatureBuilder):
             raise ValueError(
                 f"{self.name}.fit: train_rows is missing '{QUESTION_CONSTRUCT_KEY}' or '{YEAR_KEY}'"
             )
+        assert_no_outcome_rows(logs, where=f"{self.name}.fit logs")
 
         by_construct = logs.groupby("ConstructId")
         self.difficulty_by_construct_ = 1.0 - by_construct["IsCorrect"].mean()
