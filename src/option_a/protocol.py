@@ -15,7 +15,7 @@ from src.option_a.benchmark import (
     load_benchmark,
     verify_input_hashes,
 )
-from src.option_a.features import FeatureBuilder, NoFeatures
+from src.option_a.features import FeatureBuilder, FakeFeatureBuilder
 from src.option_a.folds import FOLD_KEY, Fold, leave_one_treatment_out
 from src.option_a.metrics import (
     BOOTSTRAP_SEED,
@@ -53,10 +53,20 @@ def _frame_digest(frame: pd.DataFrame) -> str:
     ).hexdigest().upper()
 
 
+def _default_feature_builders(seed: int = 42) -> Dict[str, FeatureBuilder]:
+    # Placeholder cho tới khi Hoa nộp TemporalFeatureBuilder thật (preserve_order
+    # variant). Cả hai biến thể "temporal"/"shuffled" tạm dùng FakeFeatureBuilder
+    # với seed khác nhau, chỉ để wiring chạy được end-to-end.
+    return {
+        "temporal": FakeFeatureBuilder(seed=seed),
+        "shuffled": FakeFeatureBuilder(seed=seed + 1),
+    }
+
+
 def run_protocol(
     methods: Sequence,
     bench: Optional[pd.DataFrame] = None,
-    feature_builder: Optional[FeatureBuilder] = None,
+    feature_builders: Optional[Dict[str, FeatureBuilder]] = None,
     logs: Optional[pd.DataFrame] = None,
     target: str = PRIMARY_TARGET,
     data_dir: str = "data",
@@ -70,7 +80,16 @@ def run_protocol(
         raise ValueError(f"Target '{target}' is not a column of the benchmark table")
 
     folds = leave_one_treatment_out(bench)
-    builder = feature_builder if feature_builder is not None else NoFeatures()
+    builders = feature_builders if feature_builders is not None else _default_feature_builders()
+
+    needed_variants = {
+        getattr(m, "feature_variant", None)
+        for m in methods
+        if getattr(m, "requires_features", False)
+    }
+    unknown = needed_variants - set(builders.keys())
+    if unknown:
+        raise ValueError(f"No feature builder registered for variant(s): {unknown}")
 
     predictions = pd.DataFrame(index=bench.index)
     for method in methods:
@@ -82,31 +101,39 @@ def run_protocol(
         train_rows = bench.iloc[fold.train_idx]
         test_rows = bench.iloc[fold.test_idx]
 
-        needs_features = any(getattr(m, "requires_features", False) for m in methods)
-        X_train = X_test = None
-        if needs_features:
+        variant_X: Dict[str, tuple] = {}
+        for variant in needed_variants:
+            builder = builders[variant]
             try:
                 builder.fit(train_rows, logs)
                 X_train = builder.transform(train_rows, logs)
                 X_test = builder.transform(test_rows, logs)
+                variant_X[variant] = (X_train, X_test)
             except Exception as exc:
                 failures.append(
                     {
                         "stage": "features",
                         "fold": fold.name,
                         "method": None,
+                        "variant": variant,
                         "n_rows": fold.n_test,
                         "error": f"{type(exc).__name__}: {exc}",
                     }
                 )
-                continue
 
         for method in methods:
             use_features = getattr(method, "requires_features", False)
+            X_train = X_test = None
+            if use_features:
+                variant = getattr(method, "feature_variant", None)
+                if variant not in variant_X:
+                    continue
+                X_train, X_test = variant_X[variant]
+
             try:
-                method.fit(train_rows, X_train if use_features else None, target)
+                method.fit(train_rows, X_train, target)
                 predicted = np.asarray(
-                    method.predict(test_rows, X_test if use_features else None), dtype=float
+                    method.predict(test_rows, X_test), dtype=float
                 )
                 if len(predicted) != fold.n_test:
                     raise ValueError(
@@ -181,7 +208,7 @@ def run_protocol(
         "n_folds": len(folds),
         "fold_key": FOLD_KEY,
         "methods": [m.name for m in methods],
-        "feature_builder": builder.name,
+        "feature_builders": {v: b.name for v, b in builders.items() if v in needed_variants},
         "bootstrap": {"n_replicates": N_BOOTSTRAP, "seed": BOOTSTRAP_SEED},
         "input_hashes": {k: v["observed"] for k, v in verify_input_hashes(data_dir).items()},
         "input_hashes_all_match": all(v["match"] for v in verify_input_hashes(data_dir).values()),

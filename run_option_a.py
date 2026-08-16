@@ -23,6 +23,7 @@ except ImportError:
     class TemporalPrimary:
         name = "TEMPORAL_PRIMARY"
         requires_features = True
+        feature_variant = "temporal"
 
         def __init__(self, n_estimators: int = 200, seed: int = 42):
             self.n_estimators = n_estimators
@@ -89,13 +90,16 @@ def main() -> int:
         print(describe_folds(bench, leave_one_treatment_out(bench)).to_string(index=False))
 
     methods = build_methods()
-    feature_builder = FakeFeatureBuilder(n_features=8, seed=42)
+    feature_builders = {
+        "temporal": FakeFeatureBuilder(n_features=8, seed=42),
+        "shuffled": FakeFeatureBuilder(n_features=8, seed=43),
+    }
     result = run_protocol(
         methods,
         bench=bench,
         target=args.target,
         data_dir=args.data_dir,
-        feature_builder=feature_builder,
+        feature_builders=feature_builders,
     )
 
     label = "SENSITIVITY" if args.target == SENSITIVITY_TARGET else "PRIMARY"
@@ -118,7 +122,7 @@ def main() -> int:
     print(f"\nInput hashes match frozen snapshot: {hashes_ok}")
     print(f"Predictions SHA-256: {result.manifest['predictions_sha256'][:16]}...")
     print(f"Runtime: {result.manifest['runtime_seconds']}s")
-    print(f"Feature builder used: {result.manifest['feature_builder']}")
+    print(f"Feature builders used: {result.manifest['feature_builders']}")
 
     if args.manifest:
         write_manifest(result, args.manifest)
