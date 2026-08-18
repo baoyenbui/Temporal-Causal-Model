@@ -18,3 +18,4 @@ Thumbs.db
 
 # Run outputs
 manifest*.json
+*.log
