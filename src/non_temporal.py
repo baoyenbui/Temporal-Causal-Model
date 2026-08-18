@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 
@@ -18,6 +18,14 @@ class NonTemporalSameFeatures(Method):
         self.model = None
         self.scaler = None
         self.feature_names: Optional[List[str]] = None
+
+    def get_config(self) -> Dict[str, Any]:
+        return {
+            "class": type(self).__name__,
+            "n_estimators": self.n_estimators,
+            "seed": self.seed,
+            "feature_variant": self.feature_variant,
+        }
 
     def fit(self, train_rows: pd.DataFrame, X_train: Optional[pd.DataFrame], target: str) -> None:
         if X_train is None:

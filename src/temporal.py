@@ -9,7 +9,7 @@ from typing import Dict, List, Tuple, Optional, Any
 
 from src.causal_discovery import Layer1TemporalConstruction, Layer2StructureLearning
 from src.option_a.features import FeatureBuilder
-from src.option_a.benchmark import PRIMARY_TARGET
+from src.option_a.benchmark import PRIMARY_TARGET, FORBIDDEN_MODEL_INPUTS
 from src.option_a.folds import FOLD_KEY
 
 
@@ -35,14 +35,6 @@ MIN_STRENGTH = 0.12
 
 PRE_OUTCOME_LOG_TYPES = {"Checkin", "CheckinRetry", "Lesson"}
 
-
-# ============================================================
-# Feature builder dùng cho benchmark (protocol.py). Fake/placeholder,
-# KHÔNG gọi Layer1/Layer2 ở đây vì chưa xác định được join key giữa
-# bench (row-level) và raw_logs (log-level) an toàn cho fold-local fit.
-# Bản thật cần thay _select_columns() bằng Layer1TemporalConstruction
-# + Layer2StructureLearning, miễn là fit() chỉ được nhìn train_rows/logs.
-# ============================================================
 class TemporalFeatureBuilder(FeatureBuilder):
     def __init__(self, preserve_order: bool = True, seed: int = 42):
         self.preserve_order = preserve_order
@@ -50,9 +42,17 @@ class TemporalFeatureBuilder(FeatureBuilder):
         self.name = "TEMPORAL_FEATURES" if preserve_order else "SHUFFLED_FEATURES"
         self.selected_columns: Optional[List[str]] = None
 
+    def get_config(self) -> Dict[str, Any]:
+        return {
+            "class": type(self).__name__,
+            "preserve_order": self.preserve_order,
+            "seed": self.seed,
+        }
+
     def fit(self, train_rows: pd.DataFrame, logs: Optional[pd.DataFrame]) -> None:
         numeric_cols = train_rows.select_dtypes(include=[np.number]).columns.tolist()
-        self.selected_columns = [c for c in numeric_cols if c not in (PRIMARY_TARGET, FOLD_KEY)]
+        excluded = {PRIMARY_TARGET, FOLD_KEY} | FORBIDDEN_MODEL_INPUTS
+        self.selected_columns = [c for c in numeric_cols if c not in excluded]
 
     def transform(self, rows: pd.DataFrame, logs: Optional[pd.DataFrame]) -> pd.DataFrame:
         if self.selected_columns is None:
@@ -62,7 +62,7 @@ class TemporalFeatureBuilder(FeatureBuilder):
             rng = np.random.default_rng(self.seed)
             for col in X.columns:
                 X[col] = rng.permutation(X[col].to_numpy())
-        return X
+        return self.check_output(X, rows)
 
 
 def default_feature_builders(seed: int = 42) -> Dict[str, FeatureBuilder]:
@@ -70,13 +70,6 @@ def default_feature_builders(seed: int = 42) -> Dict[str, FeatureBuilder]:
         "temporal": TemporalFeatureBuilder(preserve_order=True, seed=seed),
         "shuffled": TemporalFeatureBuilder(preserve_order=False, seed=seed),
     }
-
-
-# ============================================================
-# Từ đây trở xuống là pipeline khám phá / report (đồ thị nhân quả,
-# vẽ hình). KHÔNG được protocol.py gọi trong vòng lặp benchmark,
-# chỉ chạy riêng để ra hình cho báo cáo/chuyên đề.
-# ============================================================
 
 def humanize_feature_name(name: str) -> str:
     match = re.match(r'^CTRL_cluster_(\d+)_ratio$', name)
@@ -275,9 +268,6 @@ def build_construct_to_experiment_mapping(experiments_df: pd.DataFrame) -> pd.Da
 
 
 class TemporalArchitecture:
-    # Diagnostics/report pipeline. KHÔNG dùng để cấp feature cho benchmark
-    # (xem TemporalFeatureBuilder ở trên). Giữ nguyên để ra đồ thị nhân quả
-    # phục vụ báo cáo, chạy độc lập ngoài vòng lặp protocol.run_protocol.
     def __init__(
         self,
         window_size: int = 50,

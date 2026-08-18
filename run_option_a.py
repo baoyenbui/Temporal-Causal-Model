@@ -23,7 +23,6 @@ except ImportError:
     class TemporalPrimary:
         name = "TEMPORAL_PRIMARY"
         requires_features = True
-        feature_variant = "temporal"
 
         def __init__(self, n_estimators: int = 200, seed: int = 42):
             self.n_estimators = n_estimators
@@ -31,6 +30,13 @@ except ImportError:
             self.model = None
             self.scaler = None
             self.feature_names = None
+
+        def get_config(self):
+            return {
+                "class": type(self).__name__,
+                "n_estimators": self.n_estimators,
+                "seed": self.seed,
+            }
 
         def fit(self, train_rows, X_train, target):
             if X_train is None:
@@ -59,12 +65,16 @@ pd.set_option("display.width", 200)
 pd.set_option("display.max_columns", 30)
 
 
-def build_methods():
-    return [
-        *[cls() for cls in BASELINE_METHODS_WITHOUT_FEATURES],
-        NonTemporalSameFeatures(seed=42),
-        TemporalPrimary(seed=42),
-    ]
+def build_temporal_methods():
+    return [TemporalPrimary(seed=42)]
+
+
+def build_shuffled_methods():
+    return [NonTemporalSameFeatures(seed=42)]
+
+
+def build_baseline_methods():
+    return [cls() for cls in BASELINE_METHODS_WITHOUT_FEATURES]
 
 
 def main() -> int:
@@ -89,46 +99,70 @@ def main() -> int:
         print("\n--- Folds ---")
         print(describe_folds(bench, leave_one_treatment_out(bench)).to_string(index=False))
 
-    methods = build_methods()
-    feature_builders = {
-        "temporal": FakeFeatureBuilder(n_features=8, seed=42),
-        "shuffled": FakeFeatureBuilder(n_features=8, seed=43),
-    }
-    result = run_protocol(
-        methods,
+    baseline_result = run_protocol(
+        build_baseline_methods(),
         bench=bench,
         target=args.target,
         data_dir=args.data_dir,
-        feature_builders=feature_builders,
+    )
+
+    temporal_result = run_protocol(
+        build_temporal_methods(),
+        bench=bench,
+        target=args.target,
+        data_dir=args.data_dir,
+        feature_builder=FakeFeatureBuilder(n_features=8, seed=42),
+        reference_method="TEMPORAL_PRIMARY",
+    )
+
+    shuffled_result = run_protocol(
+        build_shuffled_methods(),
+        bench=bench,
+        target=args.target,
+        data_dir=args.data_dir,
+        feature_builder=FakeFeatureBuilder(n_features=8, seed=43),
+        reference_method="NON_TEMPORAL_SAME_FEATURES",
     )
 
     label = "SENSITIVITY" if args.target == SENSITIVITY_TARGET else "PRIMARY"
+    combined_results = pd.concat(
+        [
+            baseline_result.results_table,
+            temporal_result.results_table,
+            shuffled_result.results_table,
+        ],
+        ignore_index=True,
+    ).sort_values("MAE", na_position="last").reset_index(drop=True)
+
     print(f"\n--- Out-of-fold results ({label} target: {args.target}) ---")
-    print(result.results_table.to_string(index=False))
+    print(combined_results.to_string(index=False))
 
-    if len(result.paired_differences):
-        print("\n--- Paired MAE differences ---")
-        print(result.paired_differences.to_string(index=False))
-    else:
-        print("\nNo paired differences: the reference method is not registered yet.")
-
-    if result.failures:
-        print(f"\n--- {len(result.failures)} failure record(s) ---")
-        print(pd.DataFrame(result.failures).to_string(index=False))
+    all_failures = (
+        baseline_result.failures + temporal_result.failures + shuffled_result.failures
+    )
+    if all_failures:
+        print(f"\n--- {len(all_failures)} failure record(s) ---")
+        print(pd.DataFrame(all_failures).to_string(index=False))
     else:
         print("\nNo failures: every row received an out-of-fold prediction from every method.")
 
-    hashes_ok = result.manifest["input_hashes_all_match"]
+    hashes_ok = (
+        baseline_result.manifest["input_hashes_all_match"]
+        and temporal_result.manifest["input_hashes_all_match"]
+        and shuffled_result.manifest["input_hashes_all_match"]
+    )
     print(f"\nInput hashes match frozen snapshot: {hashes_ok}")
-    print(f"Predictions SHA-256: {result.manifest['predictions_sha256'][:16]}...")
-    print(f"Runtime: {result.manifest['runtime_seconds']}s")
-    print(f"Feature builders used: {result.manifest['feature_builders']}")
+    print(f"Temporal feature builder config: {temporal_result.manifest['feature_builder_config']}")
+    print(f"Shuffled feature builder config: {shuffled_result.manifest['feature_builder_config']}")
 
     if args.manifest:
-        write_manifest(result, args.manifest)
-        print(f"Manifest written to {args.manifest}")
+        base, ext = os.path.splitext(args.manifest)
+        write_manifest(baseline_result, f"{base}.baseline{ext}")
+        write_manifest(temporal_result, f"{base}.temporal{ext}")
+        write_manifest(shuffled_result, f"{base}.shuffled{ext}")
+        print(f"Manifests written to {base}.[baseline|temporal|shuffled]{ext}")
 
-    return 0 if hashes_ok and not result.failures else 1
+    return 0 if hashes_ok and not all_failures else 1
 
 
 if __name__ == "__main__":
