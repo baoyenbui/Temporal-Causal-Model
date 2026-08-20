@@ -1,36 +1,36 @@
 import os
 import re
+from typing import Any, Dict, List, Optional, Tuple
+
+import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import pandas as pd
-import networkx as nx
-import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-from typing import Dict, List, Tuple, Optional, Any
-
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 
 from src.causal_discovery import Layer1TemporalConstruction, Layer2StructureLearning, COUNT_COLUMNS
-from src.option_a.features import FeatureBuilder
 from src.option_a.benchmark import PRIMARY_TARGET, FORBIDDEN_MODEL_INPUTS, assert_no_outcome_rows
+from src.option_a.features import FeatureBuilder
 from src.option_a.folds import FOLD_KEY
 from src.option_a.methods import Method
 
 
 FEATURE_LABELS = {
-    'avg_success': "Accuracy Rate",
-    'success_trend': "Trending Up or Down",
-    'avg_difficulty': "Question Difficulty",
-    'difficulty_std': "Difficulty Swings",
-    'difficulty_range': "Difficulty Gap",
-    'recent5_correct_rate': "Recent Accuracy",
-    'max_streak': "Longest Correct Streak",
-    'attempts_mean': "Average Tries per Question",
-    'attempts_max': "Most Tries on One Question",
-    'pct_multi_attempt': "Retry Rate",
-    'avg_response_time': "Response Time (Average Pace)",
-    'response_time_std': "Response Time Swings",
-    'median_response_time': "Response Time (Typical Pace)",
+    "avg_success": "Accuracy Rate",
+    "success_trend": "Trending Up or Down",
+    "avg_difficulty": "Question Difficulty",
+    "difficulty_std": "Difficulty Swings",
+    "difficulty_range": "Difficulty Gap",
+    "recent5_correct_rate": "Recent Accuracy",
+    "max_streak": "Longest Correct Streak",
+    "attempts_mean": "Average Tries per Question",
+    "attempts_max": "Most Tries on One Question",
+    "pct_multi_attempt": "Retry Rate",
+    "avg_response_time": "Response Time (Average Pace)",
+    "response_time_std": "Response Time Swings",
+    "median_response_time": "Response Time (Typical Pace)",
 }
 
 MIN_STABILITY = 0.30
@@ -41,6 +41,7 @@ PRE_OUTCOME_LOG_TYPES = {"Checkin", "CheckinRetry", "Lesson"}
 
 
 def circular_shift_logs_per_user(logs: pd.DataFrame, seed: int) -> pd.DataFrame:
+    """Negative control: circular-shift event order within each UserId, keep Timestamps."""
     rng = np.random.default_rng(seed)
     parts = []
     for _, g in logs.groupby("UserId", sort=False):
@@ -55,10 +56,20 @@ def circular_shift_logs_per_user(logs: pd.DataFrame, seed: int) -> pd.DataFrame:
             parts.append(g)
     return pd.concat(parts, ignore_index=True) if parts else logs.iloc[0:0].copy()
 
+
 def _build_numeric_columns(base_columns: List[str], prefixes: Tuple[str, ...]) -> List[str]:
     return [f"{prefix}_{col}" for col in base_columns for prefix in prefixes]
 
+
 class TemporalFeatureBuilder(FeatureBuilder):
+    """Fold-local temporal (or shuffled) features from pre-outcome interaction logs.
+
+    Lookup hierarchy for each row:
+      1. (QuestionConstructId, Year) exact key
+      2. QuestionConstructId only
+      3. global fallback (fold-local mean)
+    """
+
     KEY_COLUMNS = ["TreatmentLessonConstructId", "QuestionConstructId", "Year"]
     LOOKUP_KEY_COLUMNS = ["QuestionConstructId", "Year"]
     BASE_COLUMNS = [
@@ -148,15 +159,18 @@ class TemporalFeatureBuilder(FeatureBuilder):
         if len(layer1_df) > 0:
             layer2 = Layer2StructureLearning()
             keyed = layer2.attach_experimental_keys(
-                layer1_df, mapping_df,
+                layer1_df,
+                mapping_df,
                 construct_col_in_layer1="dominant_construct",
                 construct_col_in_mapping="ConstructId",
             )
             if "ambiguous_construct_mapping" in keyed.columns:
                 n_ambiguous = int(keyed["ambiguous_construct_mapping"].sum())
                 if n_ambiguous:
-                    print(f"{self.name}.fit: dropping {n_ambiguous}/{len(keyed)} keyed rows flagged "
-                          f"ambiguous_construct_mapping before aggregating key/question statistics")
+                    print(
+                        f"{self.name}.fit: dropping {n_ambiguous}/{len(keyed)} keyed rows flagged "
+                        f"ambiguous_construct_mapping before aggregating key/question statistics"
+                    )
                 keyed = keyed[~keyed["ambiguous_construct_mapping"]]
             if len(keyed) == 0:
                 raise ValueError(
@@ -176,12 +190,15 @@ class TemporalFeatureBuilder(FeatureBuilder):
 
         n_train_rows = len(train_rows)
         n_key_covered = sum(
-            1 for _, row in train_rows[self.LOOKUP_KEY_COLUMNS].iterrows()
+            1
+            for _, row in train_rows[self.LOOKUP_KEY_COLUMNS].iterrows()
             if (row["QuestionConstructId"], row["Year"]) in self.key_features_
         )
-        print(f"{self.name}.fit: {len(self.key_features_)} (QuestionConstructId, Year) key(s) with direct stats, "
-              f"{len(self.question_fallback_)} QuestionConstructId fallback(s); "
-              f"{n_key_covered}/{n_train_rows} train rows have a direct key match")
+        print(
+            f"{self.name}.fit: {len(self.key_features_)} (QuestionConstructId, Year) key(s) with direct stats, "
+            f"{len(self.question_fallback_)} QuestionConstructId fallback(s); "
+            f"{n_key_covered}/{n_train_rows} train rows have a direct key match"
+        )
 
         if self.key_features_:
             df = pd.DataFrame(self.key_features_.values())
@@ -191,7 +208,9 @@ class TemporalFeatureBuilder(FeatureBuilder):
         if pooled_stats:
             fallback_df = pd.DataFrame(pooled_stats)
             self.global_fallback_ = {
-                col: float(fallback_df[col].mean()) if col in fallback_df.columns and fallback_df[col].notna().any() else 0.0
+                col: float(fallback_df[col].mean())
+                if col in fallback_df.columns and fallback_df[col].notna().any()
+                else 0.0
                 for col in self.NUMERIC_COLUMNS
             }
         else:
@@ -225,6 +244,45 @@ class TemporalFeatureBuilder(FeatureBuilder):
             records.append(record)
         return pd.DataFrame(records, index=rows.index)[self.NUMERIC_COLUMNS]
 
+    def coverage_report(self, rows: pd.DataFrame) -> pd.DataFrame:
+        """Per-row coverage level after fit: key_year | question_only | global.
+
+        Required for the paper: with leave-one-treatment-construct-out, most test
+        rows have no (QuestionConstructId, Year) in train and fall back to global.
+        """
+        if self.key_features_ is None and self.question_fallback_ is None:
+            raise RuntimeError(f"{self.name}.coverage_report called before fit()")
+
+        records = []
+        for idx, row in rows[self.LOOKUP_KEY_COLUMNS].iterrows():
+            q, year = row["QuestionConstructId"], row["Year"]
+            if (q, year) in (self.key_features_ or {}):
+                level = "key_year"
+            elif q in (self.question_fallback_ or {}):
+                level = "question_only"
+            else:
+                level = "global"
+            records.append(
+                {
+                    "row_index": idx,
+                    "QuestionConstructId": q,
+                    "Year": year,
+                    "coverage_level": level,
+                }
+            )
+        df = pd.DataFrame(records)
+        summary = (
+            df["coverage_level"]
+            .value_counts()
+            .reindex(["key_year", "question_only", "global"], fill_value=0)
+        )
+        print(
+            f"{self.name} coverage: key_year={int(summary['key_year'])}, "
+            f"question_only={int(summary['question_only'])}, "
+            f"global={int(summary['global'])} (total={len(df)})"
+        )
+        return df
+
 
 def default_feature_builders(seed: int = 42) -> Dict[str, FeatureBuilder]:
     return {
@@ -232,7 +290,10 @@ def default_feature_builders(seed: int = 42) -> Dict[str, FeatureBuilder]:
         "shuffled": TemporalFeatureBuilder(preserve_order=False, seed=seed + 1),
     }
 
+
 class TemporalPrimary(Method):
+    """Primary temporal method. Locked — do not retune after seeing results."""
+
     name = "TEMPORAL_PRIMARY"
     requires_features = True
     feature_variant = "temporal"
@@ -276,65 +337,74 @@ class TemporalPrimary(Method):
 
 
 def humanize_feature_name(name: str) -> str:
-    match = re.match(r'^CTRL_cluster_(\d+)_ratio$', name)
+    match = re.match(r"^CTRL_cluster_(\d+)_ratio$", name)
     if match:
         return f"Learner Group #{match.group(1)} Share"
     return FEATURE_LABELS.get(name, name)
 
 
 def filter_pre_outcome_logs(raw_logs: pd.DataFrame) -> pd.DataFrame:
-    if 'Type' not in raw_logs.columns:
+    if "Type" not in raw_logs.columns:
         raise ValueError(
             "filter_pre_outcome_logs: raw_logs has no 'Type' column. "
             "Check preprocessing.ipynb / clean_main_df."
         )
     before = len(raw_logs)
-    present_types = set(raw_logs['Type'].dropna().unique())
+    present_types = set(raw_logs["Type"].dropna().unique())
     unknown_types = present_types - PRE_OUTCOME_LOG_TYPES - {"Checkout", "CheckoutRetry"}
     if unknown_types:
         print(f"NOTE: unrecognized Type value(s) {unknown_types} dropped.")
-    filtered = raw_logs[raw_logs['Type'].isin(PRE_OUTCOME_LOG_TYPES)].copy()
+    filtered = raw_logs[raw_logs["Type"].isin(PRE_OUTCOME_LOG_TYPES)].copy()
     after = len(filtered)
-    print(f"filter_pre_outcome_logs: {before} -> {after} pre-outcome logs "
-          f"({before - after} dropped)")
+    print(
+        f"filter_pre_outcome_logs: {before} -> {after} pre-outcome logs "
+        f"({before - after} dropped)"
+    )
     if after == 0:
         raise ValueError("filter_pre_outcome_logs dropped everything.")
     return filtered
 
 
-def filter_graph_by_stability(causal_graph: dict, edge_frequency: dict,
-                              min_stability: float = MIN_STABILITY,
-                              min_strength: float = MIN_STRENGTH) -> dict:
+def filter_graph_by_stability(
+    causal_graph: dict,
+    edge_frequency: dict,
+    min_stability: float = MIN_STABILITY,
+    min_strength: float = MIN_STRENGTH,
+) -> dict:
     filtered = {target: [] for target in causal_graph}
     for target, edges in causal_graph.items():
         for edge in edges:
-            key = (edge['source'], target, edge['lag'])
+            key = (edge["source"], target, edge["lag"])
             stab = edge_frequency.get(key, 0.0)
-            strength = abs(edge.get('strength', 0.0))
+            strength = abs(edge.get("strength", 0.0))
             if stab >= min_stability and strength >= min_strength:
                 new_edge = dict(edge)
-                new_edge['stability'] = stab
+                new_edge["stability"] = stab
                 filtered[target].append(new_edge)
     return {t: e for t, e in filtered.items() if e}
 
 
-def plot_causal_graph(causal_graph: dict, output_path: str = "output/causal_graph.png",
-                      high_stability: float = HIGH_STABILITY):
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+def plot_causal_graph(
+    causal_graph: dict,
+    output_path: str = "output/causal_graph.png",
+    high_stability: float = HIGH_STABILITY,
+):
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     G = nx.MultiDiGraph()
     for target, sources in causal_graph.items():
         for edge in sources:
-            strength = edge.get('strength', 0.0)
-            stab = edge.get('stability', 0.0)
-            source_label = humanize_feature_name(edge['source'])
+            strength = edge.get("strength", 0.0)
+            stab = edge.get("stability", 0.0)
+            source_label = humanize_feature_name(edge["source"])
             target_label = humanize_feature_name(target)
             G.add_edge(
-                source_label, target_label,
-                key=edge['lag'],
-                lag=edge['lag'],
+                source_label,
+                target_label,
+                key=edge["lag"],
+                lag=edge["lag"],
                 strength=strength,
                 stability=stab,
-                p_value=edge.get('p_value', 1.0)
+                p_value=edge.get("p_value", 1.0),
             )
     print(f"Total edges plotted: {len(G.edges())}")
     if len(G.nodes()) == 0:
@@ -343,30 +413,36 @@ def plot_causal_graph(causal_graph: dict, output_path: str = "output/causal_grap
 
     pos = nx.spring_layout(G, k=3.0, iterations=100, seed=42)
     plt.figure(figsize=(20, 14))
-    node_colors = ['#FF6B6B' if G.in_degree(n) == 0 else '#4ECDC4' for n in G.nodes()]
-    nx.draw_networkx_nodes(G, pos, node_size=3200, node_color=node_colors,
-                           alpha=0.95, edgecolors='black', linewidths=1.5)
-    nx.draw_networkx_labels(G, pos, font_size=10, font_weight='bold')
+    node_colors = ["#FF6B6B" if G.in_degree(n) == 0 else "#4ECDC4" for n in G.nodes()]
+    nx.draw_networkx_nodes(
+        G, pos, node_size=3200, node_color=node_colors, alpha=0.95, edgecolors="black", linewidths=1.5
+    )
+    nx.draw_networkx_labels(G, pos, font_size=10, font_weight="bold")
 
-    solid_edges = [(u, v, d) for u, v, d in G.edges(data=True) if d.get('stability', 0) >= high_stability]
-    dashed_edges = [(u, v, d) for u, v, d in G.edges(data=True) if d.get('stability', 0) < high_stability]
+    solid_edges = [(u, v, d) for u, v, d in G.edges(data=True) if d.get("stability", 0) >= high_stability]
+    dashed_edges = [(u, v, d) for u, v, d in G.edges(data=True) if d.get("stability", 0) < high_stability]
 
     def draw_edges(edge_list, style):
         if not edge_list:
             return
-        widths = [abs(d['strength']) * 8 for _, _, d in edge_list]
-        colors = ['#E74C3C' if d['strength'] < 0 else '#3498DB' for _, _, d in edge_list]
+        widths = [abs(d["strength"]) * 8 for _, _, d in edge_list]
+        colors = ["#E74C3C" if d["strength"] < 0 else "#3498DB" for _, _, d in edge_list]
         nx.draw_networkx_edges(
-            G, pos,
+            G,
+            pos,
             edgelist=[(u, v) for u, v, _ in edge_list],
-            edge_color=colors, width=widths,
-            arrows=True, arrowsize=22, alpha=0.85,
-            arrowstyle='-|>', connectionstyle='arc3,rad=0.15',
-            style=style
+            edge_color=colors,
+            width=widths,
+            arrows=True,
+            arrowsize=22,
+            alpha=0.85,
+            arrowstyle="-|>",
+            connectionstyle="arc3,rad=0.15",
+            style=style,
         )
 
-    draw_edges(solid_edges, 'solid')
-    draw_edges(dashed_edges, 'dashed')
+    draw_edges(solid_edges, "solid")
+    draw_edges(dashed_edges, "dashed")
 
     edge_labels = {}
     for u, v, d in G.edges(data=True):
@@ -376,29 +452,68 @@ def plot_causal_graph(causal_graph: dict, output_path: str = "output/causal_grap
         else:
             edge_labels[(u, v)] = line
     nx.draw_networkx_edge_labels(
-        G, pos, edge_labels=edge_labels,
-        font_size=7, font_weight='bold',
-        bbox=dict(boxstyle='round,pad=0.25', facecolor='white', alpha=0.9)
+        G,
+        pos,
+        edge_labels=edge_labels,
+        font_size=7,
+        font_weight="bold",
+        bbox=dict(boxstyle="round,pad=0.25", facecolor="white", alpha=0.9),
     )
 
     legend_handles = [
-        Line2D([0], [0], color='#3498DB', lw=3, label='Increases target'),
-        Line2D([0], [0], color='#E74C3C', lw=3, label='Decreases target'),
-        Line2D([0], [0], color='gray', lw=2, linestyle='-', label=f'Stability ≥ {high_stability:.2f}'),
-        Line2D([0], [0], color='gray', lw=2, linestyle='--', label=f'{MIN_STABILITY:.2f} ≤ Stability < {high_stability:.2f}'),
-        Line2D([0], [0], marker='o', color='w', markerfacecolor='#FF6B6B', markersize=14, label='Root variable'),
-        Line2D([0], [0], marker='o', color='w', markerfacecolor='#4ECDC4', markersize=14, label='Downstream variable'),
+        Line2D([0], [0], color="#3498DB", lw=3, label="Increases target"),
+        Line2D([0], [0], color="#E74C3C", lw=3, label="Decreases target"),
+        Line2D([0], [0], color="gray", lw=2, linestyle="-", label=f"Stability ≥ {high_stability:.2f}"),
+        Line2D(
+            [0],
+            [0],
+            color="gray",
+            lw=2,
+            linestyle="--",
+            label=f"{MIN_STABILITY:.2f} ≤ Stability < {high_stability:.2f}",
+        ),
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            markerfacecolor="#FF6B6B",
+            markersize=14,
+            label="Root variable",
+        ),
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            markerfacecolor="#4ECDC4",
+            markersize=14,
+            label="Downstream variable",
+        ),
     ]
-    plt.legend(handles=legend_handles, loc='upper left', fontsize=11, frameon=True, framealpha=0.9)
-    note = (f"Edges shown have bootstrap stability ≥ {MIN_STABILITY:.2f}. "
-            f"Solid = stability ≥ {high_stability:.2f}; dashed = lower stability.")
-    plt.figtext(0.5, 0.01, note, ha='center', fontsize=10, style='italic',
-                bbox=dict(boxstyle='round,pad=0.4', facecolor='#F8F9FA', edgecolor='gray'))
-    plt.title(f"Temporal Causal Graph ({len(G.edges())} edges, stability ≥ {MIN_STABILITY:.2f})",
-              fontsize=16, fontweight='bold', pad=30)
-    plt.axis('off')
+    plt.legend(handles=legend_handles, loc="upper left", fontsize=11, frameon=True, framealpha=0.9)
+    note = (
+        f"Edges shown have bootstrap stability ≥ {MIN_STABILITY:.2f}. "
+        f"Solid = stability ≥ {high_stability:.2f}; dashed = lower stability."
+    )
+    plt.figtext(
+        0.5,
+        0.01,
+        note,
+        ha="center",
+        fontsize=10,
+        style="italic",
+        bbox=dict(boxstyle="round,pad=0.4", facecolor="#F8F9FA", edgecolor="gray"),
+    )
+    plt.title(
+        f"Temporal Causal Graph ({len(G.edges())} edges, stability ≥ {MIN_STABILITY:.2f})",
+        fontsize=16,
+        fontweight="bold",
+        pad=30,
+    )
+    plt.axis("off")
     plt.tight_layout(rect=[0, 0.04, 1, 1])
-    plt.savefig(output_path, dpi=400, bbox_inches='tight')
+    plt.savefig(output_path, dpi=400, bbox_inches="tight")
     plt.close()
     print(f"Saved graph: {output_path}")
 
@@ -437,7 +552,11 @@ def resolve_experiment_table_path(explicit_path: str = None) -> str:
         if not os.path.exists(path):
             continue
         try:
-            df = pd.read_csv(path, nrows=5) if path.lower().endswith(".csv") else pd.read_excel(path, nrows=5)
+            df = (
+                pd.read_csv(path, nrows=5)
+                if path.lower().endswith(".csv")
+                else pd.read_excel(path, nrows=5)
+            )
         except Exception as e:
             print(f"  (skipping {path}: {type(e).__name__}: {e})")
             continue
@@ -466,11 +585,15 @@ def build_construct_to_experiment_mapping(experiments_df: pd.DataFrame) -> pd.Da
     mapping_df = pd.concat([treatment_rows, question_rows], ignore_index=True)
     role_counts = mapping_df.groupby("ConstructId")["role"].nunique()
     dual_role_ids = sorted(role_counts[role_counts > 1].index.tolist())
-    print(f"build_construct_to_experiment_mapping: {len(experiments_df)} conditions -> "
-          f"{len(mapping_df)} rows ({len(dual_role_ids)} dual-role ConstructIds)")
+    print(
+        f"build_construct_to_experiment_mapping: {len(experiments_df)} conditions -> "
+        f"{len(mapping_df)} rows ({len(dual_role_ids)} dual-role ConstructIds)"
+    )
     if dual_role_ids:
-        print(f"  dual-role ConstructId(s): {dual_role_ids[:20]}"
-              f"{' ...' if len(dual_role_ids) > 20 else ''}")
+        print(
+            f"  dual-role ConstructId(s): {dual_role_ids[:20]}"
+            f"{' ...' if len(dual_role_ids) > 20 else ''}"
+        )
     return mapping_df
 
 
@@ -519,19 +642,18 @@ class TemporalArchitecture:
         keyed_layer1_df = self.layer2_builder.attach_experimental_keys(
             layer1_df=layer1_df,
             mapping_df=mapping_df,
-            construct_col_in_layer1='dominant_construct',
-            construct_col_in_mapping='ConstructId'
+            construct_col_in_layer1="dominant_construct",
+            construct_col_in_mapping="ConstructId",
         )
 
-        if 'role' in keyed_layer1_df.columns:
+        if "role" in keyed_layer1_df.columns:
             print(f"Keyed windows by role: {keyed_layer1_df['role'].value_counts().to_dict()}")
 
         causal_graphs, per_entity_agg, key_status = self.layer2_builder.build_layer2(
-            keyed_layer1_df,
-            run_stability_selection=True
+            keyed_layer1_df, run_stability_selection=True
         )
 
-        n_ok = sum(1 for v in key_status.values() if v['status'] == 'ok')
+        n_ok = sum(1 for v in key_status.values() if v["status"] == "ok")
         print(f"\nExperimental keys: {len(key_status)} total, {n_ok} with enough temporal density")
 
         if len(causal_graphs) == 0:
@@ -548,13 +670,11 @@ class TemporalArchitecture:
         print(f"\nReporting key: {reporting_key}")
 
         edge_frequency = {}
-        if reporting_key in key_status and 'stability' in key_status[reporting_key]:
-            edge_frequency = key_status[reporting_key]['stability'].get('edge_frequency', {})
+        if reporting_key in key_status and "stability" in key_status[reporting_key]:
+            edge_frequency = key_status[reporting_key]["stability"].get("edge_frequency", {})
 
         filtered_graph = filter_graph_by_stability(
-            raw_graph, edge_frequency,
-            min_stability=MIN_STABILITY,
-            min_strength=MIN_STRENGTH
+            raw_graph, edge_frequency, min_stability=MIN_STABILITY, min_strength=MIN_STRENGTH
         )
         n_filtered = sum(len(v) for v in filtered_graph.values())
         print(f"Edges after stability filter (≥ {MIN_STABILITY}): {n_filtered}")

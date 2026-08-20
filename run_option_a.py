@@ -3,8 +3,8 @@ import itertools
 import os
 import sys
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -14,7 +14,7 @@ from src.option_a.methods import BASELINE_METHODS_WITHOUT_FEATURES
 from src.option_a.metrics import paired_difference_ci, mae
 from src.option_a.protocol import placebo_targets, run_protocol
 
-from src.temporal import default_feature_builders, TemporalPrimary
+from src.temporal import default_feature_builders, TemporalPrimary, TemporalFeatureBuilder
 from src.non_temporal import NonTemporalSameFeatures
 
 pd.set_option("display.width", 200)
@@ -105,6 +105,48 @@ def build_combined_manifest(baseline_result, temporal_result, shuffled_result, p
     }
 
 
+def collect_coverage_by_fold(
+    bench: pd.DataFrame,
+    logs: pd.DataFrame,
+    seed: int = 42,
+) -> pd.DataFrame:
+    from src.option_a.benchmark import filter_pre_outcome
+
+    prepared_logs = filter_pre_outcome(logs)
+    folds = leave_one_treatment_out(bench)
+    rows = []
+    for fold in folds:
+        train_rows = bench.iloc[fold.train_idx]
+        test_rows = bench.iloc[fold.test_idx]
+        builder = TemporalFeatureBuilder(preserve_order=True, seed=seed)
+        builder.fit(train_rows, prepared_logs)
+        cov = builder.coverage_report(test_rows)
+        counts = (
+            cov["coverage_level"]
+            .value_counts()
+            .reindex(["key_year", "question_only", "global"], fill_value=0)
+        )
+        rows.append(
+            {
+                "fold": fold.name,
+                "n_test": int(len(test_rows)),
+                "key_year": int(counts["key_year"]),
+                "question_only": int(counts["question_only"]),
+                "global": int(counts["global"]),
+            }
+        )
+    table = pd.DataFrame(rows)
+    total = {
+        "fold": "TOTAL",
+        "n_test": int(table["n_test"].sum()),
+        "key_year": int(table["key_year"].sum()),
+        "question_only": int(table["question_only"].sum()),
+        "global": int(table["global"].sum()),
+    }
+    table = pd.concat([table, pd.DataFrame([total])], ignore_index=True)
+    return table
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Option A construct-level CATE benchmark")
     parser.add_argument("--data-dir", default="data")
@@ -115,9 +157,11 @@ def main() -> int:
     args = parser.parse_args()
 
     bench = load_benchmark(data_dir=args.data_dir)
-    print(f"Loaded {len(bench)} evaluation rows, "
-          f"{bench['TreatmentLessonConstructId'].nunique()} treatment constructs, "
-          f"years {sorted(bench['Year'].unique())}")
+    print(
+        f"Loaded {len(bench)} evaluation rows, "
+        f"{bench['TreatmentLessonConstructId'].nunique()} treatment constructs, "
+        f"years {sorted(bench['Year'].unique())}"
+    )
 
     if args.placebo:
         bench = placebo_targets(bench, target=args.target)
@@ -128,8 +172,10 @@ def main() -> int:
         print(describe_folds(bench, leave_one_treatment_out(bench)).to_string(index=False))
 
     logs = pd.read_csv(os.path.join(args.data_dir, "checkins_lessons_checkouts_training.csv"))
-    print(f"Logs loaded: {len(logs)} rows (expected n_logs_in={EXPECTED_N_LOGS_IN}: "
-          f"{'OK' if len(logs) == EXPECTED_N_LOGS_IN else 'MISMATCH'})")
+    print(
+        f"Logs loaded: {len(logs)} rows (expected n_logs_in={EXPECTED_N_LOGS_IN}: "
+        f"{'OK' if len(logs) == EXPECTED_N_LOGS_IN else 'MISMATCH'})"
+    )
 
     builders = default_feature_builders(seed=42)
 
@@ -137,17 +183,29 @@ def main() -> int:
         build_baseline_methods(), bench=bench, target=args.target, data_dir=args.data_dir,
     )
     temporal_result = run_protocol(
-        build_temporal_methods(), bench=bench, target=args.target, data_dir=args.data_dir,
-        feature_builder=builders["temporal"], logs=logs, reference_method="TEMPORAL_PRIMARY",
+        build_temporal_methods(),
+        bench=bench,
+        target=args.target,
+        data_dir=args.data_dir,
+        feature_builder=builders["temporal"],
+        logs=logs,
+        reference_method="TEMPORAL_PRIMARY",
     )
     shuffled_result = run_protocol(
-        build_shuffled_methods(), bench=bench, target=args.target, data_dir=args.data_dir,
-        feature_builder=builders["shuffled"], logs=logs, reference_method="NON_TEMPORAL_SAME_FEATURES",
+        build_shuffled_methods(),
+        bench=bench,
+        target=args.target,
+        data_dir=args.data_dir,
+        feature_builder=builders["shuffled"],
+        logs=logs,
+        reference_method="NON_TEMPORAL_SAME_FEATURES",
     )
 
-    print(f"n_logs_used from run: {temporal_result.manifest['n_logs_used']} "
-          f"(expected {EXPECTED_N_LOGS_USED}: "
-          f"{'OK' if temporal_result.manifest['n_logs_used'] == EXPECTED_N_LOGS_USED else 'MISMATCH'})")
+    print(
+        f"n_logs_used from run: {temporal_result.manifest['n_logs_used']} "
+        f"(expected {EXPECTED_N_LOGS_USED}: "
+        f"{'OK' if temporal_result.manifest['n_logs_used'] == EXPECTED_N_LOGS_USED else 'MISMATCH'})"
+    )
 
     all_failures = baseline_result.failures + temporal_result.failures + shuffled_result.failures
     hashes_ok = (
@@ -164,12 +222,20 @@ def main() -> int:
         raise ValueError("duplicate method names across baseline/temporal/shuffled runs")
     n_methods = len(predictions_all.columns)
     fully_predicted = int((predictions_all.notna().all(axis=1)).sum())
-    print(f"\n{n_methods} methods produced predictions; "
-          f"{fully_predicted}/{len(bench)} rows have predictions from all {n_methods} methods")
+    print(
+        f"\n{n_methods} methods produced predictions; "
+        f"{fully_predicted}/{len(bench)} rows have predictions from all {n_methods} methods"
+    )
+
+    print("\n--- Coverage by fold (TEMPORAL_FEATURES on held-out test rows) ---")
+    coverage_table = collect_coverage_by_fold(bench, logs, seed=42)
+    print(coverage_table.to_string(index=False))
 
     if all_failures or not hashes_ok:
-        print(f"\n{len(all_failures)} failure(s), input_hashes_all_match={hashes_ok}: "
-              f"skipping final combined table until these are resolved.")
+        print(
+            f"\n{len(all_failures)} failure(s), input_hashes_all_match={hashes_ok}: "
+            f"skipping final combined table until these are resolved."
+        )
         if all_failures:
             print(pd.DataFrame(all_failures).to_string(index=False))
         return 1
@@ -190,16 +256,26 @@ def main() -> int:
     print(pairwise_ci.to_string(index=False))
 
     manifest = build_combined_manifest(baseline_result, temporal_result, shuffled_result, predictions_all)
-    print(f"\nCombined manifest: n_logs_in={manifest['n_logs_in']}, n_logs_used={manifest['n_logs_used']}, "
-          f"input_hashes_all_match={manifest['input_hashes_all_match']}, "
-          f"predictions_sha256={manifest['predictions_sha256']}")
+    print(
+        f"\nCombined manifest: n_logs_in={manifest['n_logs_in']}, n_logs_used={manifest['n_logs_used']}, "
+        f"git_dirty={manifest['git_dirty']}, "
+        f"input_hashes_all_match={manifest['input_hashes_all_match']}, "
+        f"predictions_sha256={manifest['predictions_sha256']}"
+    )
 
     if args.manifest:
         import json
+
         with open(args.manifest, "w", encoding="utf-8") as handle:
             json.dump(
-                {"manifest": manifest, "pairwise_ci": pairwise_ci.to_dict(orient="records")},
-                handle, indent=2, ensure_ascii=False,
+                {
+                    "manifest": manifest,
+                    "pairwise_ci": pairwise_ci.to_dict(orient="records"),
+                    "coverage_by_fold": coverage_table.to_dict(orient="records"),
+                },
+                handle,
+                indent=2,
+                ensure_ascii=False,
             )
         print(f"Manifest written to {args.manifest}")
 
