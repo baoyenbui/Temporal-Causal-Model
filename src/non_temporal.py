@@ -30,14 +30,11 @@ class NonTemporalSameFeatures(Method):
     def fit(self, train_rows: pd.DataFrame, X_train: Optional[pd.DataFrame], target: str) -> None:
         if X_train is None:
             raise ValueError("NON_TEMPORAL_SAME_FEATURES requires features")
-
         self.feature_names = list(X_train.columns)
         X_raw = X_train[self.feature_names].fillna(0.0).values.astype(float)
         y = train_rows[target].values.astype(float)
-
         self.scaler = StandardScaler()
         X_scaled = self.scaler.fit_transform(X_raw)
-
         self.model = RandomForestRegressor(
             n_estimators=self.n_estimators,
             random_state=self.seed,
@@ -48,7 +45,6 @@ class NonTemporalSameFeatures(Method):
     def predict(self, test_rows: pd.DataFrame, X_test: Optional[pd.DataFrame]) -> np.ndarray:
         if X_test is None:
             raise ValueError("NON_TEMPORAL_SAME_FEATURES requires features")
-
         X_raw = X_test[self.feature_names].fillna(0.0).values.astype(float)
         X_scaled = self.scaler.transform(X_raw)
         return self.model.predict(X_scaled)

@@ -1,0 +1,308 @@
+{
+  "manifest": {
+    "commit": "05150ba10bb6f72461dcae42811fa5d8579a04f9",
+    "git_dirty": true,
+    "target": "ate_k_1__",
+    "control": {
+      "type": "primary",
+      "seed": null
+    },
+    "n_rows": 88,
+    "n_folds": 15,
+    "fold_key": "TreatmentLessonConstructId",
+    "n_logs_in": 641490,
+    "n_logs_used": 563117,
+    "n_logs_consistent_across_runs": true,
+    "n_logs_in_matches_frozen": true,
+    "n_logs_used_matches_frozen": true,
+    "methods": [
+      "ZERO_EFFECT",
+      "TRAIN_MEAN",
+      "YEAR_STRATIFIED_MEAN",
+      "TEMPORAL_PRIMARY",
+      "NON_TEMPORAL_SAME_FEATURES"
+    ],
+    "sub_manifests": {
+      "baseline": {
+        "commit": "05150ba10bb6f72461dcae42811fa5d8579a04f9",
+        "git_dirty": true,
+        "git_changed_paths": [
+          "run_option_a.py",
+          "src/causal_discovery.py",
+          "src/features_student.py",
+          "src/non_temporal.py",
+          "src/temporal.py"
+        ],
+        "target": "ate_k_1__",
+        "control": {
+          "type": "primary",
+          "seed": null
+        },
+        "n_rows": 88,
+        "n_rows_expected": 88,
+        "n_logs_in": 0,
+        "n_logs_used": 0,
+        "n_folds": 15,
+        "fold_key": "TreatmentLessonConstructId",
+        "methods": [
+          "ZERO_EFFECT",
+          "TRAIN_MEAN",
+          "YEAR_STRATIFIED_MEAN"
+        ],
+        "method_configs": [
+          {
+            "class": "src.option_a.methods.ZeroEffect"
+          },
+          {
+            "class": "src.option_a.methods.TrainMean"
+          },
+          {
+            "class": "src.option_a.methods.YearStratifiedMean"
+          }
+        ],
+        "feature_builder_config": {},
+        "bootstrap": {
+          "n_replicates": 2000,
+          "seed": 42
+        },
+        "input_hashes": {
+          "checkin_to_checkout.csv": "0E9A4A461AF6EC2027FBFCAC3858D0FAB49526E6BDE436526C47234165EA1C7D",
+          "checkins_lessons_checkouts_training.csv": "B5076BBABC6A3B9B8DB6F0C4FEC3F67E9EED27213D4209A0FBC7E5DCCAE13D94",
+          "construct_experiments_ates_test.csv": "791107AA8FD5969F544CB4B2E4DF28EBF22CDAE9A675A3F02CA1DEE8EE8969F3",
+          "construct_experiments_input_test.csv": "9C547DC3114A25E2B884AC2E37116EC7A2FE0282595901BEEA4D91E940D2C265",
+          "construct_prerequisites_test.csv": "846161CC0EE708F3CA5B515A880F5E6DBFACDE66FBD03D6FB54E4F8DFF5C32B4",
+          "constructs_input_test.csv": "A7482206822F687EC79BD80A3E1E0BDB5108217FEFAE3BA79B370154163099B2",
+          "student_metadata.csv": "6D16E1B875F4EF0AA4996CB8145C16CEF37A243163450D815285BD7B8607B6F8",
+          "subject_metadata.csv": "72C4B16936BAEE70A25D5B8B05753E4BDDAB06F3690343D8055C8A5808587EC8",
+          "topic_pathway_metadata.csv": "35FE8A90501992BA1D070A09634D51CE70D7DBAFE325B65EBF22BBD140C890F2"
+        },
+        "input_hashes_all_match": true,
+        "n_failures": 0,
+        "predictions_sha256": "09D111D4C1AA552E893CE45FFDA445ABFA95AA79B5FDA05D8BCAD93519C6CC69",
+        "results_sha256": "7AA59488CEAE51BD86FB213C223BB3034F253FCDD34AD3B70E2CB9A512327251",
+        "runtime_seconds": 0.58,
+        "python": "3.13.5",
+        "platform": "Windows-11-10.0.26200-SP0"
+      },
+      "temporal": {
+        "commit": "05150ba10bb6f72461dcae42811fa5d8579a04f9",
+        "git_dirty": true,
+        "git_changed_paths": [
+          "run_option_a.py",
+          "src/causal_discovery.py",
+          "src/features_student.py",
+          "src/non_temporal.py",
+          "src/temporal.py"
+        ],
+        "target": "ate_k_1__",
+        "control": {
+          "type": "primary",
+          "seed": null
+        },
+        "n_rows": 88,
+        "n_rows_expected": 88,
+        "n_logs_in": 641490,
+        "n_logs_used": 563117,
+        "n_folds": 15,
+        "fold_key": "TreatmentLessonConstructId",
+        "methods": [
+          "TEMPORAL_PRIMARY"
+        ],
+        "method_configs": [
+          {
+            "class": "TemporalPrimary",
+            "n_estimators": 200,
+            "seed": 42,
+            "feature_variant": "temporal"
+          }
+        ],
+        "feature_builder_config": {
+          "class": "TemporalFeatureBuilder",
+          "preserve_order": true,
+          "seed": 42,
+          "window_size": 50,
+          "step_size": 50,
+          "max_response_time_seconds": 300.0,
+          "lookup_key": [
+            "QuestionConstructId",
+            "Year"
+          ]
+        },
+        "bootstrap": {
+          "n_replicates": 2000,
+          "seed": 42
+        },
+        "input_hashes": {
+          "checkin_to_checkout.csv": "0E9A4A461AF6EC2027FBFCAC3858D0FAB49526E6BDE436526C47234165EA1C7D",
+          "checkins_lessons_checkouts_training.csv": "B5076BBABC6A3B9B8DB6F0C4FEC3F67E9EED27213D4209A0FBC7E5DCCAE13D94",
+          "construct_experiments_ates_test.csv": "791107AA8FD5969F544CB4B2E4DF28EBF22CDAE9A675A3F02CA1DEE8EE8969F3",
+          "construct_experiments_input_test.csv": "9C547DC3114A25E2B884AC2E37116EC7A2FE0282595901BEEA4D91E940D2C265",
+          "construct_prerequisites_test.csv": "846161CC0EE708F3CA5B515A880F5E6DBFACDE66FBD03D6FB54E4F8DFF5C32B4",
+          "constructs_input_test.csv": "A7482206822F687EC79BD80A3E1E0BDB5108217FEFAE3BA79B370154163099B2",
+          "student_metadata.csv": "6D16E1B875F4EF0AA4996CB8145C16CEF37A243163450D815285BD7B8607B6F8",
+          "subject_metadata.csv": "72C4B16936BAEE70A25D5B8B05753E4BDDAB06F3690343D8055C8A5808587EC8",
+          "topic_pathway_metadata.csv": "35FE8A90501992BA1D070A09634D51CE70D7DBAFE325B65EBF22BBD140C890F2"
+        },
+        "input_hashes_all_match": true,
+        "n_failures": 0,
+        "predictions_sha256": "7956DCFF0135E5F576B55D7532BE7011EDF91509F48240AF902B2B6DE72F1AD1",
+        "results_sha256": "0FAD1DAFD080CFBCE326EE7CC02985E958AC890FDC187A9828B5340D02F23DAC",
+        "runtime_seconds": 121.904,
+        "python": "3.13.5",
+        "platform": "Windows-11-10.0.26200-SP0"
+      },
+      "shuffled": {
+        "commit": "05150ba10bb6f72461dcae42811fa5d8579a04f9",
+        "git_dirty": true,
+        "git_changed_paths": [
+          "run_option_a.py",
+          "src/causal_discovery.py",
+          "src/features_student.py",
+          "src/non_temporal.py",
+          "src/temporal.py"
+        ],
+        "target": "ate_k_1__",
+        "control": {
+          "type": "primary",
+          "seed": null
+        },
+        "n_rows": 88,
+        "n_rows_expected": 88,
+        "n_logs_in": 641490,
+        "n_logs_used": 563117,
+        "n_folds": 15,
+        "fold_key": "TreatmentLessonConstructId",
+        "methods": [
+          "NON_TEMPORAL_SAME_FEATURES"
+        ],
+        "method_configs": [
+          {
+            "class": "NonTemporalSameFeatures",
+            "n_estimators": 200,
+            "seed": 42,
+            "feature_variant": "shuffled"
+          }
+        ],
+        "feature_builder_config": {
+          "class": "TemporalFeatureBuilder",
+          "preserve_order": false,
+          "seed": 43,
+          "window_size": 50,
+          "step_size": 50,
+          "max_response_time_seconds": 300.0,
+          "lookup_key": [
+            "QuestionConstructId",
+            "Year"
+          ]
+        },
+        "bootstrap": {
+          "n_replicates": 2000,
+          "seed": 42
+        },
+        "input_hashes": {
+          "checkin_to_checkout.csv": "0E9A4A461AF6EC2027FBFCAC3858D0FAB49526E6BDE436526C47234165EA1C7D",
+          "checkins_lessons_checkouts_training.csv": "B5076BBABC6A3B9B8DB6F0C4FEC3F67E9EED27213D4209A0FBC7E5DCCAE13D94",
+          "construct_experiments_ates_test.csv": "791107AA8FD5969F544CB4B2E4DF28EBF22CDAE9A675A3F02CA1DEE8EE8969F3",
+          "construct_experiments_input_test.csv": "9C547DC3114A25E2B884AC2E37116EC7A2FE0282595901BEEA4D91E940D2C265",
+          "construct_prerequisites_test.csv": "846161CC0EE708F3CA5B515A880F5E6DBFACDE66FBD03D6FB54E4F8DFF5C32B4",
+          "constructs_input_test.csv": "A7482206822F687EC79BD80A3E1E0BDB5108217FEFAE3BA79B370154163099B2",
+          "student_metadata.csv": "6D16E1B875F4EF0AA4996CB8145C16CEF37A243163450D815285BD7B8607B6F8",
+          "subject_metadata.csv": "72C4B16936BAEE70A25D5B8B05753E4BDDAB06F3690343D8055C8A5808587EC8",
+          "topic_pathway_metadata.csv": "35FE8A90501992BA1D070A09634D51CE70D7DBAFE325B65EBF22BBD140C890F2"
+        },
+        "input_hashes_all_match": true,
+        "n_failures": 0,
+        "predictions_sha256": "D360AB305485359B150F187C5204D8E7B30D1DDC5E0F8F7CD78D52EDE90691F8",
+        "results_sha256": "E72F727ED41A895A55A588BEBF2AA9BCABE348BDBD3AC681228E70EABD46122A",
+        "runtime_seconds": 211.831,
+        "python": "3.13.5",
+        "platform": "Windows-11-10.0.26200-SP0"
+      }
+    },
+    "input_hashes_all_match": true,
+    "predictions_sha256": "63A6D09818A07BCB3F377B455B83A03980B4291A2AD89472783A484D9D2F41AA",
+    "n_failures_total": 0
+  },
+  "pairwise_ci": [
+    {
+      "method_a": "ZERO_EFFECT",
+      "method_b": "TRAIN_MEAN",
+      "n_shared": 88,
+      "MAE_diff_a_minus_b": 0.0019775075686107035,
+      "diff_lo": -0.013124859181976912,
+      "diff_hi": 0.01397937157702613
+    },
+    {
+      "method_a": "ZERO_EFFECT",
+      "method_b": "YEAR_STRATIFIED_MEAN",
+      "n_shared": 88,
+      "MAE_diff_a_minus_b": -0.0006512289662235771,
+      "diff_lo": -0.027849674315839446,
+      "diff_hi": 0.021719411574209452
+    },
+    {
+      "method_a": "ZERO_EFFECT",
+      "method_b": "TEMPORAL_PRIMARY",
+      "n_shared": 88,
+      "MAE_diff_a_minus_b": 0.002669669827681076,
+      "diff_lo": -0.009579347060310155,
+      "diff_hi": 0.012801805928716296
+    },
+    {
+      "method_a": "ZERO_EFFECT",
+      "method_b": "NON_TEMPORAL_SAME_FEATURES",
+      "n_shared": 88,
+      "MAE_diff_a_minus_b": 0.002789460688213369,
+      "diff_lo": -0.007851375980619376,
+      "diff_hi": 0.011211070100104626
+    },
+    {
+      "method_a": "TRAIN_MEAN",
+      "method_b": "YEAR_STRATIFIED_MEAN",
+      "n_shared": 88,
+      "MAE_diff_a_minus_b": -0.0026287365348342806,
+      "diff_lo": -0.023468173268140505,
+      "diff_hi": 0.013188811352685037
+    },
+    {
+      "method_a": "TRAIN_MEAN",
+      "method_b": "TEMPORAL_PRIMARY",
+      "n_shared": 88,
+      "MAE_diff_a_minus_b": 0.0006921622590703724,
+      "diff_lo": -0.004457039908785308,
+      "diff_hi": 0.006052517939691126
+    },
+    {
+      "method_a": "TRAIN_MEAN",
+      "method_b": "NON_TEMPORAL_SAME_FEATURES",
+      "n_shared": 88,
+      "MAE_diff_a_minus_b": 0.0008119531196026653,
+      "diff_lo": -0.0034588359057541617,
+      "diff_hi": 0.005598855043982274
+    },
+    {
+      "method_a": "YEAR_STRATIFIED_MEAN",
+      "method_b": "TEMPORAL_PRIMARY",
+      "n_shared": 88,
+      "MAE_diff_a_minus_b": 0.003320898793904653,
+      "diff_lo": -0.013480369008645573,
+      "diff_hi": 0.024892529031475655
+    },
+    {
+      "method_a": "YEAR_STRATIFIED_MEAN",
+      "method_b": "NON_TEMPORAL_SAME_FEATURES",
+      "n_shared": 88,
+      "MAE_diff_a_minus_b": 0.003440689654436946,
+      "diff_lo": -0.014109410628886819,
+      "diff_hi": 0.025803206614660883
+    },
+    {
+      "method_a": "TEMPORAL_PRIMARY",
+      "method_b": "NON_TEMPORAL_SAME_FEATURES",
+      "n_shared": 88,
+      "MAE_diff_a_minus_b": 0.00011979086053229282,
+      "diff_lo": -0.0032416686787848023,
+      "diff_hi": 0.003689837863023769
+    }
+  ]
+}

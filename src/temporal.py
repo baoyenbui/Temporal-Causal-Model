@@ -7,10 +7,14 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from typing import Dict, List, Tuple, Optional, Any
 
-from src.causal_discovery import Layer1TemporalConstruction, Layer2StructureLearning
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
+
+from src.causal_discovery import Layer1TemporalConstruction, Layer2StructureLearning, COUNT_COLUMNS
 from src.option_a.features import FeatureBuilder
-from src.option_a.benchmark import PRIMARY_TARGET, FORBIDDEN_MODEL_INPUTS
+from src.option_a.benchmark import PRIMARY_TARGET, FORBIDDEN_MODEL_INPUTS, assert_no_outcome_rows
 from src.option_a.folds import FOLD_KEY
+from src.option_a.methods import Method
 
 
 FEATURE_LABELS = {
@@ -35,41 +39,241 @@ MIN_STRENGTH = 0.12
 
 PRE_OUTCOME_LOG_TYPES = {"Checkin", "CheckinRetry", "Lesson"}
 
+
+def circular_shift_logs_per_user(logs: pd.DataFrame, seed: int) -> pd.DataFrame:
+    rng = np.random.default_rng(seed)
+    parts = []
+    for _, g in logs.groupby("UserId", sort=False):
+        g = g.sort_values("Timestamp", kind="mergesort").reset_index(drop=True)
+        n = len(g)
+        if n > 1:
+            shift = int(rng.integers(1, n))
+            shifted = g.iloc[np.roll(np.arange(n), shift)].reset_index(drop=True)
+            shifted["Timestamp"] = g["Timestamp"].to_numpy()
+            parts.append(shifted)
+        else:
+            parts.append(g)
+    return pd.concat(parts, ignore_index=True) if parts else logs.iloc[0:0].copy()
+
+def _build_numeric_columns(base_columns: List[str], prefixes: Tuple[str, ...]) -> List[str]:
+    return [f"{prefix}_{col}" for col in base_columns for prefix in prefixes]
+
 class TemporalFeatureBuilder(FeatureBuilder):
-    def __init__(self, preserve_order: bool = True, seed: int = 42):
+    KEY_COLUMNS = ["TreatmentLessonConstructId", "QuestionConstructId", "Year"]
+    LOOKUP_KEY_COLUMNS = ["QuestionConstructId", "Year"]
+    BASE_COLUMNS = [
+        "success_rate",
+        "success_trend",
+    ]
+    SPLIT_PREFIXES = ("recent", "historical", "delta")
+    NUMERIC_COLUMNS = _build_numeric_columns(BASE_COLUMNS, SPLIT_PREFIXES)
+
+    def __init__(
+        self,
+        preserve_order: bool = True,
+        seed: int = 42,
+        window_size: int = 50,
+        step_size: int = 50,
+        max_response_time_seconds: float = 300.0,
+    ):
         self.preserve_order = preserve_order
         self.seed = seed
         self.name = "TEMPORAL_FEATURES" if preserve_order else "SHUFFLED_FEATURES"
-        self.selected_columns: Optional[List[str]] = None
+        self.window_size = window_size
+        self.step_size = step_size
+        self.max_response_time_seconds = max_response_time_seconds
+
+        self.key_features_: Optional[Dict[Tuple, Dict[str, float]]] = None
+        self.question_fallback_: Optional[Dict[Any, Dict[str, float]]] = None
+        self.global_fallback_: Optional[Dict[str, float]] = None
+        self.scaler_: Optional[StandardScaler] = None
 
     def get_config(self) -> Dict[str, Any]:
         return {
             "class": type(self).__name__,
             "preserve_order": self.preserve_order,
             "seed": self.seed,
+            "window_size": self.window_size,
+            "step_size": self.step_size,
+            "max_response_time_seconds": self.max_response_time_seconds,
+            "lookup_key": self.LOOKUP_KEY_COLUMNS,
+            "base_columns": self.BASE_COLUMNS,
         }
 
-    def fit(self, train_rows: pd.DataFrame, logs: Optional[pd.DataFrame]) -> None:
-        numeric_cols = train_rows.select_dtypes(include=[np.number]).columns.tolist()
-        excluded = {PRIMARY_TARGET, FOLD_KEY} | FORBIDDEN_MODEL_INPUTS
-        self.selected_columns = [c for c in numeric_cols if c not in excluded]
+    def _split_recent_historical(self, g: pd.DataFrame) -> Dict[str, float]:
+        stats: Dict[str, float] = {}
+        if "window_start_time" not in g.columns or g["window_start_time"].isna().all():
+            return stats
+        median_time = g["window_start_time"].median()
+        recent_mask = g["window_start_time"] > median_time
+        historical_mask = ~recent_mask
+        for col in self.BASE_COLUMNS:
+            if col not in g.columns:
+                continue
+            recent_series = g.loc[recent_mask, col].dropna()
+            historical_series = g.loc[historical_mask, col].dropna()
+            recent_val = float(recent_series.mean()) if len(recent_series) else None
+            historical_val = float(historical_series.mean()) if len(historical_series) else None
+            if recent_val is not None:
+                stats[f"recent_{col}"] = recent_val
+            if historical_val is not None:
+                stats[f"historical_{col}"] = historical_val
+            if recent_val is not None and historical_val is not None:
+                stats[f"delta_{col}"] = recent_val - historical_val
+        return stats
+
+    def fit(self, train_rows: pd.DataFrame, logs: Optional[pd.DataFrame]) -> "TemporalFeatureBuilder":
+        if logs is None:
+            raise ValueError(f"{self.name}.fit requires interaction logs (logs=None)")
+        assert_no_outcome_rows(logs, where=f"{self.name}.fit logs")
+        missing = set(self.KEY_COLUMNS) - set(train_rows.columns)
+        if missing:
+            raise ValueError(f"{self.name}.fit: train_rows missing {sorted(missing)}")
+
+        event_logs = logs if self.preserve_order else circular_shift_logs_per_user(logs, seed=self.seed)
+
+        layer1 = Layer1TemporalConstruction(
+            window_size=self.window_size,
+            step_size=self.step_size,
+            max_response_time_seconds=self.max_response_time_seconds,
+        )
+        layer1_df = layer1.build_layer1(event_logs)
+
+        mapping_df = build_construct_to_experiment_mapping(
+            train_rows[self.KEY_COLUMNS].drop_duplicates()
+        )
+
+        self.key_features_ = {}
+        self.question_fallback_ = {}
+        if len(layer1_df) > 0:
+            layer2 = Layer2StructureLearning()
+            keyed = layer2.attach_experimental_keys(
+                layer1_df, mapping_df,
+                construct_col_in_layer1="dominant_construct",
+                construct_col_in_mapping="ConstructId",
+            )
+            if "ambiguous_construct_mapping" in keyed.columns:
+                n_ambiguous = int(keyed["ambiguous_construct_mapping"].sum())
+                if n_ambiguous:
+                    print(f"{self.name}.fit: dropping {n_ambiguous}/{len(keyed)} keyed rows flagged "
+                          f"ambiguous_construct_mapping before aggregating key/question statistics")
+                keyed = keyed[~keyed["ambiguous_construct_mapping"]]
+            if len(keyed) == 0:
+                raise ValueError(
+                    f"{self.name}.fit: no unambiguous keyed rows remain after filtering; "
+                    f"cannot build key_features_ or question_fallback_"
+                )
+            if set(self.LOOKUP_KEY_COLUMNS).issubset(keyed.columns):
+                for key, g in keyed.groupby(self.LOOKUP_KEY_COLUMNS, sort=False):
+                    stats = self._split_recent_historical(g)
+                    if stats:
+                        self.key_features_[tuple(key)] = stats
+            if "QuestionConstructId" in keyed.columns:
+                for q, g in keyed.groupby("QuestionConstructId", sort=False):
+                    stats = self._split_recent_historical(g)
+                    if stats:
+                        self.question_fallback_[q] = stats
+
+        n_train_rows = len(train_rows)
+        n_key_covered = sum(
+            1 for _, row in train_rows[self.LOOKUP_KEY_COLUMNS].iterrows()
+            if (row["QuestionConstructId"], row["Year"]) in self.key_features_
+        )
+        print(f"{self.name}.fit: {len(self.key_features_)} (QuestionConstructId, Year) key(s) with direct stats, "
+              f"{len(self.question_fallback_)} QuestionConstructId fallback(s); "
+              f"{n_key_covered}/{n_train_rows} train rows have a direct key match")
+
+        if self.key_features_:
+            df = pd.DataFrame(self.key_features_.values())
+            print(f"{self.name} feature variance:\n{df.var()}")
+
+        pooled_stats = list(self.key_features_.values()) + list(self.question_fallback_.values())
+        if pooled_stats:
+            fallback_df = pd.DataFrame(pooled_stats)
+            self.global_fallback_ = {
+                col: float(fallback_df[col].mean()) if col in fallback_df.columns and fallback_df[col].notna().any() else 0.0
+                for col in self.NUMERIC_COLUMNS
+            }
+        else:
+            self.global_fallback_ = {col: 0.0 for col in self.NUMERIC_COLUMNS}
+
+        numeric = self._numeric_features(train_rows).fillna(0.0)
+        self.scaler_ = StandardScaler().fit(numeric.to_numpy())
+        return self
 
     def transform(self, rows: pd.DataFrame, logs: Optional[pd.DataFrame]) -> pd.DataFrame:
-        if self.selected_columns is None:
-            raise RuntimeError("TemporalFeatureBuilder.transform called before fit()")
-        X = rows[self.selected_columns].copy()
-        if not self.preserve_order:
-            rng = np.random.default_rng(self.seed)
-            for col in X.columns:
-                X[col] = rng.permutation(X[col].to_numpy())
-        return self.check_output(X, rows)
+        if self.scaler_ is None:
+            raise RuntimeError(f"{self.name}.transform called before fit()")
+        missing = set(self.KEY_COLUMNS) - set(rows.columns)
+        if missing:
+            raise ValueError(f"{self.name}.transform: rows missing {sorted(missing)}")
+
+        numeric = self._numeric_features(rows).fillna(0.0)
+        scaled = self.scaler_.transform(numeric.to_numpy())
+        features = pd.DataFrame(scaled, columns=self.NUMERIC_COLUMNS, index=rows.index)
+        features = features.reset_index(drop=True)
+        return self.check_output(features, rows)
+
+    def _numeric_features(self, rows: pd.DataFrame) -> pd.DataFrame:
+        records = []
+        for _, row in rows[self.LOOKUP_KEY_COLUMNS].iterrows():
+            q, year = row["QuestionConstructId"], row["Year"]
+            stats = (self.key_features_ or {}).get((q, year))
+            if stats is None:
+                stats = (self.question_fallback_ or {}).get(q, {})
+            record = {col: stats.get(col, self.global_fallback_[col]) for col in self.NUMERIC_COLUMNS}
+            records.append(record)
+        return pd.DataFrame(records, index=rows.index)[self.NUMERIC_COLUMNS]
 
 
 def default_feature_builders(seed: int = 42) -> Dict[str, FeatureBuilder]:
     return {
         "temporal": TemporalFeatureBuilder(preserve_order=True, seed=seed),
-        "shuffled": TemporalFeatureBuilder(preserve_order=False, seed=seed),
+        "shuffled": TemporalFeatureBuilder(preserve_order=False, seed=seed + 1),
     }
+
+class TemporalPrimary(Method):
+    name = "TEMPORAL_PRIMARY"
+    requires_features = True
+    feature_variant = "temporal"
+
+    def __init__(self, n_estimators: int = 200, seed: int = 42):
+        self.n_estimators = n_estimators
+        self.seed = seed
+        self.model = None
+        self.scaler = None
+        self.feature_names: Optional[List[str]] = None
+
+    def get_config(self) -> Dict[str, Any]:
+        return {
+            "class": type(self).__name__,
+            "n_estimators": self.n_estimators,
+            "seed": self.seed,
+            "feature_variant": self.feature_variant,
+        }
+
+    def fit(self, train_rows: pd.DataFrame, X_train: Optional[pd.DataFrame], target: str) -> None:
+        if X_train is None:
+            raise ValueError("TEMPORAL_PRIMARY requires features")
+        self.feature_names = list(X_train.columns)
+        X_raw = X_train[self.feature_names].fillna(0.0).values.astype(float)
+        y = train_rows[target].values.astype(float)
+        self.scaler = StandardScaler()
+        X_scaled = self.scaler.fit_transform(X_raw)
+        self.model = RandomForestRegressor(
+            n_estimators=self.n_estimators,
+            random_state=self.seed,
+            n_jobs=-1,
+        )
+        self.model.fit(X_scaled, y)
+
+    def predict(self, test_rows: pd.DataFrame, X_test: Optional[pd.DataFrame]) -> np.ndarray:
+        if X_test is None:
+            raise ValueError("TEMPORAL_PRIMARY requires features")
+        X_raw = X_test[self.feature_names].fillna(0.0).values.astype(float)
+        X_scaled = self.scaler.transform(X_raw)
+        return self.model.predict(X_scaled)
+
 
 def humanize_feature_name(name: str) -> str:
     match = re.match(r'^CTRL_cluster_(\d+)_ratio$', name)
@@ -260,10 +464,13 @@ def build_construct_to_experiment_mapping(experiments_df: pd.DataFrame) -> pd.Da
     question_rows["role"] = "question"
 
     mapping_df = pd.concat([treatment_rows, question_rows], ignore_index=True)
-    both_roles = mapping_df.groupby("ConstructId")["role"].nunique()
-    n_dual_role = int((both_roles > 1).sum())
+    role_counts = mapping_df.groupby("ConstructId")["role"].nunique()
+    dual_role_ids = sorted(role_counts[role_counts > 1].index.tolist())
     print(f"build_construct_to_experiment_mapping: {len(experiments_df)} conditions -> "
-          f"{len(mapping_df)} rows ({n_dual_role} dual-role ConstructIds)")
+          f"{len(mapping_df)} rows ({len(dual_role_ids)} dual-role ConstructIds)")
+    if dual_role_ids:
+        print(f"  dual-role ConstructId(s): {dual_role_ids[:20]}"
+              f"{' ...' if len(dual_role_ids) > 20 else ''}")
     return mapping_df
 
 
