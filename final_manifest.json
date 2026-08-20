@@ -1,7 +1,7 @@
 {
   "manifest": {
-    "commit": "05150ba10bb6f72461dcae42811fa5d8579a04f9",
-    "git_dirty": true,
+    "commit": "c1df6bcabc07f003498f8084e2030d815e0c6e34",
+    "git_dirty": false,
     "target": "ate_k_1__",
     "control": {
       "type": "primary",
@@ -24,15 +24,9 @@
     ],
     "sub_manifests": {
       "baseline": {
-        "commit": "05150ba10bb6f72461dcae42811fa5d8579a04f9",
-        "git_dirty": true,
-        "git_changed_paths": [
-          "run_option_a.py",
-          "src/causal_discovery.py",
-          "src/features_student.py",
-          "src/non_temporal.py",
-          "src/temporal.py"
-        ],
+        "commit": "c1df6bcabc07f003498f8084e2030d815e0c6e34",
+        "git_dirty": false,
+        "git_changed_paths": [],
         "target": "ate_k_1__",
         "control": {
           "type": "primary",
@@ -80,20 +74,14 @@
         "n_failures": 0,
         "predictions_sha256": "09D111D4C1AA552E893CE45FFDA445ABFA95AA79B5FDA05D8BCAD93519C6CC69",
         "results_sha256": "7AA59488CEAE51BD86FB213C223BB3034F253FCDD34AD3B70E2CB9A512327251",
-        "runtime_seconds": 0.58,
+        "runtime_seconds": 0.594,
         "python": "3.13.5",
         "platform": "Windows-11-10.0.26200-SP0"
       },
       "temporal": {
-        "commit": "05150ba10bb6f72461dcae42811fa5d8579a04f9",
-        "git_dirty": true,
-        "git_changed_paths": [
-          "run_option_a.py",
-          "src/causal_discovery.py",
-          "src/features_student.py",
-          "src/non_temporal.py",
-          "src/temporal.py"
-        ],
+        "commit": "c1df6bcabc07f003498f8084e2030d815e0c6e34",
+        "git_dirty": false,
+        "git_changed_paths": [],
         "target": "ate_k_1__",
         "control": {
           "type": "primary",
@@ -126,6 +114,10 @@
           "lookup_key": [
             "QuestionConstructId",
             "Year"
+          ],
+          "base_columns": [
+            "success_rate",
+            "success_trend"
           ]
         },
         "bootstrap": {
@@ -145,22 +137,16 @@
         },
         "input_hashes_all_match": true,
         "n_failures": 0,
-        "predictions_sha256": "7956DCFF0135E5F576B55D7532BE7011EDF91509F48240AF902B2B6DE72F1AD1",
-        "results_sha256": "0FAD1DAFD080CFBCE326EE7CC02985E958AC890FDC187A9828B5340D02F23DAC",
-        "runtime_seconds": 121.904,
+        "predictions_sha256": "331BFEC2FCF4F2D94F007DA2A60269CD1FFF4E9F136460CAA9F4B2DC0BB7046E",
+        "results_sha256": "C895CB72EB1595463468B0717B1934E19D7AF366B51765065F682C75DDDA7E99",
+        "runtime_seconds": 167.383,
         "python": "3.13.5",
         "platform": "Windows-11-10.0.26200-SP0"
       },
       "shuffled": {
-        "commit": "05150ba10bb6f72461dcae42811fa5d8579a04f9",
-        "git_dirty": true,
-        "git_changed_paths": [
-          "run_option_a.py",
-          "src/causal_discovery.py",
-          "src/features_student.py",
-          "src/non_temporal.py",
-          "src/temporal.py"
-        ],
+        "commit": "c1df6bcabc07f003498f8084e2030d815e0c6e34",
+        "git_dirty": false,
+        "git_changed_paths": [],
         "target": "ate_k_1__",
         "control": {
           "type": "primary",
@@ -193,6 +179,10 @@
           "lookup_key": [
             "QuestionConstructId",
             "Year"
+          ],
+          "base_columns": [
+            "success_rate",
+            "success_trend"
           ]
         },
         "bootstrap": {
@@ -212,15 +202,15 @@
         },
         "input_hashes_all_match": true,
         "n_failures": 0,
-        "predictions_sha256": "D360AB305485359B150F187C5204D8E7B30D1DDC5E0F8F7CD78D52EDE90691F8",
-        "results_sha256": "E72F727ED41A895A55A588BEBF2AA9BCABE348BDBD3AC681228E70EABD46122A",
-        "runtime_seconds": 211.831,
+        "predictions_sha256": "CEA5C76BCE931B0E94EB75009A5B8A7B7677729AE17972158F50D3A37DA502FD",
+        "results_sha256": "015B190256CF4A5734B3EBBD8BEE23B6325DEB2923AB8A92790494F623C4B600",
+        "runtime_seconds": 239.97,
         "python": "3.13.5",
         "platform": "Windows-11-10.0.26200-SP0"
       }
     },
     "input_hashes_all_match": true,
-    "predictions_sha256": "63A6D09818A07BCB3F377B455B83A03980B4291A2AD89472783A484D9D2F41AA",
+    "predictions_sha256": "336EAE7215B3771BA32582CCB9BB7519D6B9EF6AC412AE0BDD69EDE90576B726",
     "n_failures_total": 0
   },
   "pairwise_ci": [
@@ -244,17 +234,17 @@
       "method_a": "ZERO_EFFECT",
       "method_b": "TEMPORAL_PRIMARY",
       "n_shared": 88,
-      "MAE_diff_a_minus_b": 0.002669669827681076,
-      "diff_lo": -0.009579347060310155,
-      "diff_hi": 0.012801805928716296
+      "MAE_diff_a_minus_b": 0.002267142141855666,
+      "diff_lo": -0.009475043325628579,
+      "diff_hi": 0.011298156756524978
     },
     {
       "method_a": "ZERO_EFFECT",
       "method_b": "NON_TEMPORAL_SAME_FEATURES",
       "n_shared": 88,
-      "MAE_diff_a_minus_b": 0.002789460688213369,
-      "diff_lo": -0.007851375980619376,
-      "diff_hi": 0.011211070100104626
+      "MAE_diff_a_minus_b": 0.0029217432712168034,
+      "diff_lo": -0.016152044574315533,
+      "diff_hi": 0.0193279921829902
     },
     {
       "method_a": "TRAIN_MEAN",
@@ -268,41 +258,155 @@
       "method_a": "TRAIN_MEAN",
       "method_b": "TEMPORAL_PRIMARY",
       "n_shared": 88,
-      "MAE_diff_a_minus_b": 0.0006921622590703724,
-      "diff_lo": -0.004457039908785308,
-      "diff_hi": 0.006052517939691126
+      "MAE_diff_a_minus_b": 0.00028963457324496233,
+      "diff_lo": -0.004861489621903385,
+      "diff_hi": 0.005904862162999058
     },
     {
       "method_a": "TRAIN_MEAN",
       "method_b": "NON_TEMPORAL_SAME_FEATURES",
       "n_shared": 88,
-      "MAE_diff_a_minus_b": 0.0008119531196026653,
-      "diff_lo": -0.0034588359057541617,
-      "diff_hi": 0.005598855043982274
+      "MAE_diff_a_minus_b": 0.0009442357026060999,
+      "diff_lo": -0.004308486174829298,
+      "diff_hi": 0.007540287250445954
     },
     {
       "method_a": "YEAR_STRATIFIED_MEAN",
       "method_b": "TEMPORAL_PRIMARY",
       "n_shared": 88,
-      "MAE_diff_a_minus_b": 0.003320898793904653,
-      "diff_lo": -0.013480369008645573,
-      "diff_hi": 0.024892529031475655
+      "MAE_diff_a_minus_b": 0.002918371108079243,
+      "diff_lo": -0.013258233922915696,
+      "diff_hi": 0.023376917860430682
     },
     {
       "method_a": "YEAR_STRATIFIED_MEAN",
       "method_b": "NON_TEMPORAL_SAME_FEATURES",
       "n_shared": 88,
-      "MAE_diff_a_minus_b": 0.003440689654436946,
-      "diff_lo": -0.014109410628886819,
-      "diff_hi": 0.025803206614660883
+      "MAE_diff_a_minus_b": 0.0035729722374403805,
+      "diff_lo": -0.012691786202718625,
+      "diff_hi": 0.024334910875111207
     },
     {
       "method_a": "TEMPORAL_PRIMARY",
       "method_b": "NON_TEMPORAL_SAME_FEATURES",
       "n_shared": 88,
-      "MAE_diff_a_minus_b": 0.00011979086053229282,
-      "diff_lo": -0.0032416686787848023,
-      "diff_hi": 0.003689837863023769
+      "MAE_diff_a_minus_b": 0.0006546011293611376,
+      "diff_lo": -0.007609441068911249,
+      "diff_hi": 0.009080471875148571
+    }
+  ],
+  "coverage_by_fold": [
+    {
+      "fold": "LOTO_206",
+      "n_test": 7,
+      "key_year": 0,
+      "question_only": 0,
+      "global": 7
+    },
+    {
+      "fold": "LOTO_432",
+      "n_test": 10,
+      "key_year": 0,
+      "question_only": 0,
+      "global": 10
+    },
+    {
+      "fold": "LOTO_440",
+      "n_test": 5,
+      "key_year": 0,
+      "question_only": 0,
+      "global": 5
+    },
+    {
+      "fold": "LOTO_469",
+      "n_test": 13,
+      "key_year": 0,
+      "question_only": 0,
+      "global": 13
+    },
+    {
+      "fold": "LOTO_638",
+      "n_test": 3,
+      "key_year": 0,
+      "question_only": 0,
+      "global": 3
+    },
+    {
+      "fold": "LOTO_690",
+      "n_test": 5,
+      "key_year": 0,
+      "question_only": 2,
+      "global": 3
+    },
+    {
+      "fold": "LOTO_703",
+      "n_test": 5,
+      "key_year": 0,
+      "question_only": 2,
+      "global": 3
+    },
+    {
+      "fold": "LOTO_855",
+      "n_test": 4,
+      "key_year": 0,
+      "question_only": 0,
+      "global": 4
+    },
+    {
+      "fold": "LOTO_935",
+      "n_test": 4,
+      "key_year": 0,
+      "question_only": 0,
+      "global": 4
+    },
+    {
+      "fold": "LOTO_1470",
+      "n_test": 5,
+      "key_year": 0,
+      "question_only": 0,
+      "global": 5
+    },
+    {
+      "fold": "LOTO_1872",
+      "n_test": 4,
+      "key_year": 0,
+      "question_only": 0,
+      "global": 4
+    },
+    {
+      "fold": "LOTO_2028",
+      "n_test": 5,
+      "key_year": 0,
+      "question_only": 0,
+      "global": 5
+    },
+    {
+      "fold": "LOTO_2563",
+      "n_test": 5,
+      "key_year": 0,
+      "question_only": 0,
+      "global": 5
+    },
+    {
+      "fold": "LOTO_3132",
+      "n_test": 10,
+      "key_year": 1,
+      "question_only": 0,
+      "global": 9
+    },
+    {
+      "fold": "LOTO_3133",
+      "n_test": 3,
+      "key_year": 1,
+      "question_only": 0,
+      "global": 2
+    },
+    {
+      "fold": "TOTAL",
+      "n_test": 88,
+      "key_year": 2,
+      "question_only": 4,
+      "global": 82
     }
   ]
 }
