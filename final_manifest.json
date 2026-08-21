@@ -1,7 +1,7 @@
 {
   "manifest": {
-    "commit": "c1df6bcabc07f003498f8084e2030d815e0c6e34",
-    "git_dirty": false,
+    "commit": "87ce891822b8e68113c02312d93bdccad9823e07",
+    "git_dirty": true,
     "target": "ate_k_1__",
     "control": {
       "type": "primary",
@@ -24,9 +24,12 @@
     ],
     "sub_manifests": {
       "baseline": {
-        "commit": "c1df6bcabc07f003498f8084e2030d815e0c6e34",
-        "git_dirty": false,
-        "git_changed_paths": [],
+        "commit": "87ce891822b8e68113c02312d93bdccad9823e07",
+        "git_dirty": true,
+        "git_changed_paths": [
+          "final_manifest.json",
+          "run_option_a.py"
+        ],
         "target": "ate_k_1__",
         "control": {
           "type": "primary",
@@ -74,14 +77,17 @@
         "n_failures": 0,
         "predictions_sha256": "09D111D4C1AA552E893CE45FFDA445ABFA95AA79B5FDA05D8BCAD93519C6CC69",
         "results_sha256": "7AA59488CEAE51BD86FB213C223BB3034F253FCDD34AD3B70E2CB9A512327251",
-        "runtime_seconds": 0.594,
+        "runtime_seconds": 0.544,
         "python": "3.13.5",
         "platform": "Windows-11-10.0.26200-SP0"
       },
       "temporal": {
-        "commit": "c1df6bcabc07f003498f8084e2030d815e0c6e34",
-        "git_dirty": false,
-        "git_changed_paths": [],
+        "commit": "87ce891822b8e68113c02312d93bdccad9823e07",
+        "git_dirty": true,
+        "git_changed_paths": [
+          "final_manifest.json",
+          "run_option_a.py"
+        ],
         "target": "ate_k_1__",
         "control": {
           "type": "primary",
@@ -137,16 +143,19 @@
         },
         "input_hashes_all_match": true,
         "n_failures": 0,
-        "predictions_sha256": "331BFEC2FCF4F2D94F007DA2A60269CD1FFF4E9F136460CAA9F4B2DC0BB7046E",
-        "results_sha256": "C895CB72EB1595463468B0717B1934E19D7AF366B51765065F682C75DDDA7E99",
-        "runtime_seconds": 167.383,
+        "predictions_sha256": "0BBD8D29835030C52A39667D651AA0F287779AFAFBCAED9F057756F959FE71A5",
+        "results_sha256": "38F3B237451FC9B3C794F8421136EEDCDD48BAC4A24948F3EC52C116289C479C",
+        "runtime_seconds": 152.734,
         "python": "3.13.5",
         "platform": "Windows-11-10.0.26200-SP0"
       },
       "shuffled": {
-        "commit": "c1df6bcabc07f003498f8084e2030d815e0c6e34",
-        "git_dirty": false,
-        "git_changed_paths": [],
+        "commit": "87ce891822b8e68113c02312d93bdccad9823e07",
+        "git_dirty": true,
+        "git_changed_paths": [
+          "final_manifest.json",
+          "run_option_a.py"
+        ],
         "target": "ate_k_1__",
         "control": {
           "type": "primary",
@@ -202,16 +211,68 @@
         },
         "input_hashes_all_match": true,
         "n_failures": 0,
-        "predictions_sha256": "CEA5C76BCE931B0E94EB75009A5B8A7B7677729AE17972158F50D3A37DA502FD",
-        "results_sha256": "015B190256CF4A5734B3EBBD8BEE23B6325DEB2923AB8A92790494F623C4B600",
-        "runtime_seconds": 239.97,
+        "predictions_sha256": "2147FB92E138F9D1CABFF2B8E49A87224E6A1025CF6272809AB419F4CD2814DF",
+        "results_sha256": "65D9161F111FFCEC95DB20C9A0847BA4BFC1369EAF969BEB0F99FDE7FE8C9F9C",
+        "runtime_seconds": 218.019,
         "python": "3.13.5",
         "platform": "Windows-11-10.0.26200-SP0"
       }
     },
     "input_hashes_all_match": true,
-    "predictions_sha256": "336EAE7215B3771BA32582CCB9BB7519D6B9EF6AC412AE0BDD69EDE90576B726",
+    "predictions_sha256": "4E46B29E120A65B8A4785654490835B9E14524E07D04511CF93C7020D581A7B8",
     "n_failures_total": 0
+  },
+  "metrics": {
+    "NON_TEMPORAL_SAME_FEATURES": {
+      "n_predicted": 88,
+      "n_missing": 0,
+      "MAE": 0.13353135362651047,
+      "MAE_lo": 0.0968008258023571,
+      "MAE_hi": 0.181205603613238,
+      "RMSE": 0.19031462720006714,
+      "Spearman": -0.04053585216030833,
+      "SignAgreement": 0.625
+    },
+    "TEMPORAL_PRIMARY": {
+      "n_predicted": 88,
+      "n_missing": 0,
+      "MAE": 0.1341859547558716,
+      "MAE_lo": 0.09879889450639014,
+      "MAE_hi": 0.18393799541014602,
+      "RMSE": 0.19121807462132903,
+      "Spearman": -0.04895854203467306,
+      "SignAgreement": 0.6136363636363636
+    },
+    "TRAIN_MEAN": {
+      "n_predicted": 88,
+      "n_missing": 0,
+      "MAE": 0.13447558932911657,
+      "MAE_lo": 0.09658546083088733,
+      "MAE_hi": 0.18478186533910432,
+      "RMSE": 0.19282556750205157,
+      "Spearman": -0.46465900781347735,
+      "SignAgreement": 0.5909090909090909
+    },
+    "ZERO_EFFECT": {
+      "n_predicted": 88,
+      "n_missing": 0,
+      "MAE": 0.13645309689772728,
+      "MAE_lo": 0.10043882815454261,
+      "MAE_hi": 0.18651630527642846,
+      "RMSE": 0.19718529604932586,
+      "Spearman": null,
+      "SignAgreement": 0.022727272727272728
+    },
+    "YEAR_STRATIFIED_MEAN": {
+      "n_predicted": 88,
+      "n_missing": 0,
+      "MAE": 0.13710432586395085,
+      "MAE_lo": 0.09999953655448168,
+      "MAE_hi": 0.18452923455074108,
+      "RMSE": 0.1902159429647269,
+      "Spearman": 0.12915433276954943,
+      "SignAgreement": 0.625
+    }
   },
   "pairwise_ci": [
     {
@@ -275,7 +336,7 @@
       "method_b": "TEMPORAL_PRIMARY",
       "n_shared": 88,
       "MAE_diff_a_minus_b": 0.002918371108079243,
-      "diff_lo": -0.013258233922915696,
+      "diff_lo": -0.013258233922915722,
       "diff_hi": 0.023376917860430682
     },
     {
@@ -283,7 +344,7 @@
       "method_b": "NON_TEMPORAL_SAME_FEATURES",
       "n_shared": 88,
       "MAE_diff_a_minus_b": 0.0035729722374403805,
-      "diff_lo": -0.012691786202718625,
+      "diff_lo": -0.012691786202718597,
       "diff_hi": 0.024334910875111207
     },
     {
@@ -291,10 +352,3982 @@
       "method_b": "NON_TEMPORAL_SAME_FEATURES",
       "n_shared": 88,
       "MAE_diff_a_minus_b": 0.0006546011293611376,
-      "diff_lo": -0.007609441068911249,
+      "diff_lo": -0.0076094410689113035,
       "diff_hi": 0.009080471875148571
     }
   ],
+  "predictions": {
+    "ZERO_EFFECT": [
+      {
+        "row_index": 0,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 211,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.019090644,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 1,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 212,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.0360036,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 2,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 216,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.118014184,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 3,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 217,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": 0.107894737,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 4,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 218,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.010350776,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 5,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 470,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.181768707,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 6,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 471,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.156716418,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 7,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 474,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.087878788,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 8,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 475,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.076244666,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 9,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 476,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.06440483,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 10,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 479,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.114398135,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 11,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 2296,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.057575758,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 12,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 287,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.040639269,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 13,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 474,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": 0.029187125,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 14,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 479,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": 0.075,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 15,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 483,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.053058677,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 16,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 547,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.078827839,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 17,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1270,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.0225242,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 18,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1271,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": 0.01546003,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 19,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1272,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.060089165,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 20,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1403,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.135703064,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 21,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3380,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": 0.029106858,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 22,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 216,
+        "Year": 5,
+        "fold_key": 206,
+        "y_true": -0.098709452,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 23,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 217,
+        "Year": 5,
+        "fold_key": 206,
+        "y_true": -0.108949911,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 24,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 531,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.114193548,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 25,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 700,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": -0.104545455,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 26,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 701,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.165909091,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 27,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 702,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.132284382,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 28,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 706,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.010695187,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 29,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 707,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.071867322,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 30,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 692,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.019047619,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 31,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 695,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.111742424,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 32,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 700,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": -0.012096774,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 33,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 704,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.093137255,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 34,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1476,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.094202899,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 35,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1482,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.097424412,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 36,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1484,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.114379085,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 37,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1533,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.0,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 38,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1810,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": -0.037084399,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 39,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2034,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.092885375,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 40,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2035,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.092258065,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 41,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2066,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.093877551,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 42,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2104,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": -0.000351865,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 43,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 3156,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": -0.025918762,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 44,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 424,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": 0.012820513,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 45,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 433,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.194235589,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 46,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 435,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": 0.058897243,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 47,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3124,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.093984962,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 48,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3228,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.119047619,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 49,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 424,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.221491228,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 50,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 433,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": -0.153508772,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 51,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 435,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.120614035,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 52,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3124,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.129385965,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 53,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3228,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.414473684,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 54,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 447,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": 0.133333333,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 55,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 448,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.1,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 56,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 1286,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": 0.0,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 57,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 3121,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.166666667,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 58,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 3218,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.066666667,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 59,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 854,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": -0.057142857,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 60,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 1267,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": -0.271428571,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 61,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 3120,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": 0.657142857,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 62,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 3132,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": 0.314285714,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 63,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2580,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.857142857,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 64,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2588,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.214285714,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 65,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2593,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.5,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 66,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2598,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.357142857,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 67,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2602,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.071428571,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 68,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1271,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.152777778,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 69,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3119,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.055555556,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 70,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3133,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": -0.083333333,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 71,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3176,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.402777778,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 72,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3243,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.069444444,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 73,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 72,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.333333333,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 74,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 639,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.055555556,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 75,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 3424,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.166666667,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 76,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 702,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.051724138,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 77,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1873,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": -0.133333333,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 78,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1875,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": -0.1,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 79,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1877,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": 0.233333333,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 80,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 2748,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": 0.066666667,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 81,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1272,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": -0.3,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 82,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1275,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": 0.247619048,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 83,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1276,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": -0.201587302,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 84,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 941,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.027777778,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 85,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 956,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.126984127,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 86,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 957,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.5,
+        "prediction": 0.0
+      },
+      {
+        "row_index": 87,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 960,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.152777778,
+        "prediction": 0.0
+      }
+    ],
+    "TRAIN_MEAN": [
+      {
+        "row_index": 0,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 211,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.019090644,
+        "prediction": 0.06387898554320988
+      },
+      {
+        "row_index": 1,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 212,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.0360036,
+        "prediction": 0.06387898554320988
+      },
+      {
+        "row_index": 2,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 216,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.118014184,
+        "prediction": 0.06387898554320988
+      },
+      {
+        "row_index": 3,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 217,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": 0.107894737,
+        "prediction": 0.06387898554320988
+      },
+      {
+        "row_index": 4,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 218,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.010350776,
+        "prediction": 0.06387898554320988
+      },
+      {
+        "row_index": 5,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 470,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.181768707,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 6,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 471,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.156716418,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 7,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 474,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.087878788,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 8,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 475,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.076244666,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 9,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 476,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.06440483,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 10,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 479,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.114398135,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 11,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 2296,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.057575758,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 12,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 287,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.040639269,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 13,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 474,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": 0.029187125,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 14,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 479,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": 0.075,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 15,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 483,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.053058677,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 16,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 547,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.078827839,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 17,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1270,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.0225242,
+        "prediction": 0.05727565791025641
+      },
+      {
+        "row_index": 18,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1271,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": 0.01546003,
+        "prediction": 0.05727565791025641
+      },
+      {
+        "row_index": 19,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1272,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.060089165,
+        "prediction": 0.05727565791025641
+      },
+      {
+        "row_index": 20,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1403,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.135703064,
+        "prediction": 0.05727565791025641
+      },
+      {
+        "row_index": 21,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3380,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": 0.029106858,
+        "prediction": 0.05727565791025641
+      },
+      {
+        "row_index": 22,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 216,
+        "Year": 5,
+        "fold_key": 206,
+        "y_true": -0.098709452,
+        "prediction": 0.06387898554320988
+      },
+      {
+        "row_index": 23,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 217,
+        "Year": 5,
+        "fold_key": 206,
+        "y_true": -0.108949911,
+        "prediction": 0.06387898554320988
+      },
+      {
+        "row_index": 24,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 531,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.114193548,
+        "prediction": 0.05474842412
+      },
+      {
+        "row_index": 25,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 700,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": -0.104545455,
+        "prediction": 0.055599559903614454
+      },
+      {
+        "row_index": 26,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 701,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.165909091,
+        "prediction": 0.055599559903614454
+      },
+      {
+        "row_index": 27,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 702,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.132284382,
+        "prediction": 0.055599559903614454
+      },
+      {
+        "row_index": 28,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 706,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.010695187,
+        "prediction": 0.055599559903614454
+      },
+      {
+        "row_index": 29,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 707,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.071867322,
+        "prediction": 0.055599559903614454
+      },
+      {
+        "row_index": 30,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 692,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.019047619,
+        "prediction": 0.055752040204819275
+      },
+      {
+        "row_index": 31,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 695,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.111742424,
+        "prediction": 0.055752040204819275
+      },
+      {
+        "row_index": 32,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 700,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": -0.012096774,
+        "prediction": 0.055752040204819275
+      },
+      {
+        "row_index": 33,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 704,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.093137255,
+        "prediction": 0.055752040204819275
+      },
+      {
+        "row_index": 34,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1476,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.094202899,
+        "prediction": 0.05568737351807229
+      },
+      {
+        "row_index": 35,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1482,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.097424412,
+        "prediction": 0.05568737351807229
+      },
+      {
+        "row_index": 36,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1484,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.114379085,
+        "prediction": 0.05568737351807229
+      },
+      {
+        "row_index": 37,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1533,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.0,
+        "prediction": 0.05568737351807229
+      },
+      {
+        "row_index": 38,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1810,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": -0.037084399,
+        "prediction": 0.05568737351807229
+      },
+      {
+        "row_index": 39,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2034,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.092885375,
+        "prediction": 0.05588221246987952
+      },
+      {
+        "row_index": 40,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2035,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.092258065,
+        "prediction": 0.05588221246987952
+      },
+      {
+        "row_index": 41,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2066,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.093877551,
+        "prediction": 0.05588221246987952
+      },
+      {
+        "row_index": 42,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2104,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": -0.000351865,
+        "prediction": 0.05588221246987952
+      },
+      {
+        "row_index": 43,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 3156,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": -0.025918762,
+        "prediction": 0.05588221246987952
+      },
+      {
+        "row_index": 44,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 424,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": 0.012820513,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 45,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 433,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.194235589,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 46,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 435,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": 0.058897243,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 47,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3124,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.093984962,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 48,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3228,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.119047619,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 49,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 424,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.221491228,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 50,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 433,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": -0.153508772,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 51,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 435,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.120614035,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 52,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3124,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.129385965,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 53,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3228,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.414473684,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 54,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 447,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": 0.133333333,
+        "prediction": 0.06133703614457831
+      },
+      {
+        "row_index": 55,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 448,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.1,
+        "prediction": 0.06133703614457831
+      },
+      {
+        "row_index": 56,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 1286,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": 0.0,
+        "prediction": 0.06133703614457831
+      },
+      {
+        "row_index": 57,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 3121,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.166666667,
+        "prediction": 0.06133703614457831
+      },
+      {
+        "row_index": 58,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 3218,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.066666667,
+        "prediction": 0.06133703614457831
+      },
+      {
+        "row_index": 59,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 854,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": -0.057142857,
+        "prediction": 0.05057281971428572
+      },
+      {
+        "row_index": 60,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 1267,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": -0.271428571,
+        "prediction": 0.05057281971428572
+      },
+      {
+        "row_index": 61,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 3120,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": 0.657142857,
+        "prediction": 0.05057281971428572
+      },
+      {
+        "row_index": 62,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 3132,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": 0.314285714,
+        "prediction": 0.05057281971428572
+      },
+      {
+        "row_index": 63,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2580,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.857142857,
+        "prediction": 0.03483101204819277
+      },
+      {
+        "row_index": 64,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2588,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.214285714,
+        "prediction": 0.03483101204819277
+      },
+      {
+        "row_index": 65,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2593,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.5,
+        "prediction": 0.03483101204819277
+      },
+      {
+        "row_index": 66,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2598,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.357142857,
+        "prediction": 0.03483101204819277
+      },
+      {
+        "row_index": 67,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2602,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.071428571,
+        "prediction": 0.03483101204819277
+      },
+      {
+        "row_index": 68,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1271,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.152777778,
+        "prediction": 0.05727565791025641
+      },
+      {
+        "row_index": 69,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3119,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.055555556,
+        "prediction": 0.05727565791025641
+      },
+      {
+        "row_index": 70,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3133,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": -0.083333333,
+        "prediction": 0.05727565791025641
+      },
+      {
+        "row_index": 71,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3176,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.402777778,
+        "prediction": 0.05727565791025641
+      },
+      {
+        "row_index": 72,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3243,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.069444444,
+        "prediction": 0.05727565791025641
+      },
+      {
+        "row_index": 73,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 72,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.333333333,
+        "prediction": 0.06407681829411764
+      },
+      {
+        "row_index": 74,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 639,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.055555556,
+        "prediction": 0.06407681829411764
+      },
+      {
+        "row_index": 75,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 3424,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.166666667,
+        "prediction": 0.06407681829411764
+      },
+      {
+        "row_index": 76,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 702,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.051724138,
+        "prediction": 0.055752040204819275
+      },
+      {
+        "row_index": 77,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1873,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": -0.133333333,
+        "prediction": 0.057432230142857144
+      },
+      {
+        "row_index": 78,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1875,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": -0.1,
+        "prediction": 0.057432230142857144
+      },
+      {
+        "row_index": 79,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1877,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": 0.233333333,
+        "prediction": 0.057432230142857144
+      },
+      {
+        "row_index": 80,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 2748,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": 0.066666667,
+        "prediction": 0.057432230142857144
+      },
+      {
+        "row_index": 81,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1272,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": -0.3,
+        "prediction": 0.06052873238823529
+      },
+      {
+        "row_index": 82,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1275,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": 0.247619048,
+        "prediction": 0.06052873238823529
+      },
+      {
+        "row_index": 83,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1276,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": -0.201587302,
+        "prediction": 0.06052873238823529
+      },
+      {
+        "row_index": 84,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 941,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.027777778,
+        "prediction": 0.04861231328571428
+      },
+      {
+        "row_index": 85,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 956,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.126984127,
+        "prediction": 0.04861231328571428
+      },
+      {
+        "row_index": 86,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 957,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.5,
+        "prediction": 0.04861231328571428
+      },
+      {
+        "row_index": 87,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 960,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.152777778,
+        "prediction": 0.04861231328571428
+      }
+    ],
+    "YEAR_STRATIFIED_MEAN": [
+      {
+        "row_index": 0,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 211,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.019090644,
+        "prediction": 0.1324845102972973
+      },
+      {
+        "row_index": 1,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 212,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.0360036,
+        "prediction": 0.1324845102972973
+      },
+      {
+        "row_index": 2,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 216,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.118014184,
+        "prediction": 0.1324845102972973
+      },
+      {
+        "row_index": 3,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 217,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": 0.107894737,
+        "prediction": 0.1324845102972973
+      },
+      {
+        "row_index": 4,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 218,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.010350776,
+        "prediction": 0.1324845102972973
+      },
+      {
+        "row_index": 5,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 470,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.181768707,
+        "prediction": 0.11685828129411764
+      },
+      {
+        "row_index": 6,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 471,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.156716418,
+        "prediction": 0.11685828129411764
+      },
+      {
+        "row_index": 7,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 474,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.087878788,
+        "prediction": 0.11685828129411764
+      },
+      {
+        "row_index": 8,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 475,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.076244666,
+        "prediction": 0.11685828129411764
+      },
+      {
+        "row_index": 9,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 476,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.06440483,
+        "prediction": 0.11685828129411764
+      },
+      {
+        "row_index": 10,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 479,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.114398135,
+        "prediction": 0.11685828129411764
+      },
+      {
+        "row_index": 11,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 2296,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.057575758,
+        "prediction": 0.11685828129411764
+      },
+      {
+        "row_index": 12,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 287,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.040639269,
+        "prediction": -0.0326526011
+      },
+      {
+        "row_index": 13,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 474,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": 0.029187125,
+        "prediction": -0.0326526011
+      },
+      {
+        "row_index": 14,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 479,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": 0.075,
+        "prediction": -0.0326526011
+      },
+      {
+        "row_index": 15,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 483,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.053058677,
+        "prediction": -0.0326526011
+      },
+      {
+        "row_index": 16,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 547,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.078827839,
+        "prediction": -0.0326526011
+      },
+      {
+        "row_index": 17,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1270,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.0225242,
+        "prediction": -0.02738205705
+      },
+      {
+        "row_index": 18,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1271,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": 0.01546003,
+        "prediction": -0.02738205705
+      },
+      {
+        "row_index": 19,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1272,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.060089165,
+        "prediction": -0.02738205705
+      },
+      {
+        "row_index": 20,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1403,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.135703064,
+        "prediction": -0.02738205705
+      },
+      {
+        "row_index": 21,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3380,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": 0.029106858,
+        "prediction": -0.02738205705
+      },
+      {
+        "row_index": 22,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 216,
+        "Year": 5,
+        "fold_key": 206,
+        "y_true": -0.098709452,
+        "prediction": 0.06387898554320988
+      },
+      {
+        "row_index": 23,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 217,
+        "Year": 5,
+        "fold_key": 206,
+        "y_true": -0.108949911,
+        "prediction": 0.06387898554320988
+      },
+      {
+        "row_index": 24,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 531,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.114193548,
+        "prediction": 0.11685828129411764
+      },
+      {
+        "row_index": 25,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 700,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": -0.104545455,
+        "prediction": 0.12297707802702704
+      },
+      {
+        "row_index": 26,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 701,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.165909091,
+        "prediction": 0.12297707802702704
+      },
+      {
+        "row_index": 27,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 702,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.132284382,
+        "prediction": 0.12297707802702704
+      },
+      {
+        "row_index": 28,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 706,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.010695187,
+        "prediction": 0.12297707802702704
+      },
+      {
+        "row_index": 29,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 707,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.071867322,
+        "prediction": 0.12297707802702704
+      },
+      {
+        "row_index": 30,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 692,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.019047619,
+        "prediction": -0.0492472672
+      },
+      {
+        "row_index": 31,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 695,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.111742424,
+        "prediction": -0.0492472672
+      },
+      {
+        "row_index": 32,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 700,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": -0.012096774,
+        "prediction": -0.0492472672
+      },
+      {
+        "row_index": 33,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 704,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.093137255,
+        "prediction": -0.0492472672
+      },
+      {
+        "row_index": 34,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1476,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.094202899,
+        "prediction": 0.05568737351807229
+      },
+      {
+        "row_index": 35,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1482,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.097424412,
+        "prediction": 0.05568737351807229
+      },
+      {
+        "row_index": 36,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1484,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.114379085,
+        "prediction": 0.05568737351807229
+      },
+      {
+        "row_index": 37,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1533,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.0,
+        "prediction": 0.05568737351807229
+      },
+      {
+        "row_index": 38,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1810,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": -0.037084399,
+        "prediction": 0.05568737351807229
+      },
+      {
+        "row_index": 39,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2034,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.092885375,
+        "prediction": 0.20188492075
+      },
+      {
+        "row_index": 40,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2035,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.092258065,
+        "prediction": 0.20188492075
+      },
+      {
+        "row_index": 41,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2066,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.093877551,
+        "prediction": 0.20188492075
+      },
+      {
+        "row_index": 42,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2104,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": -0.000351865,
+        "prediction": 0.20188492075
+      },
+      {
+        "row_index": 43,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 3156,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": -0.025918762,
+        "prediction": 0.20188492075
+      },
+      {
+        "row_index": 44,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 424,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": 0.012820513,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 45,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 433,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.194235589,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 46,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 435,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": 0.058897243,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 47,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3124,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.093984962,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 48,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3228,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.119047619,
+        "prediction": 0.05761625991025641
+      },
+      {
+        "row_index": 49,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 424,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.221491228,
+        "prediction": 0.11064611551351351
+      },
+      {
+        "row_index": 50,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 433,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": -0.153508772,
+        "prediction": 0.11064611551351351
+      },
+      {
+        "row_index": 51,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 435,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.120614035,
+        "prediction": 0.11064611551351351
+      },
+      {
+        "row_index": 52,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3124,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.129385965,
+        "prediction": 0.11064611551351351
+      },
+      {
+        "row_index": 53,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3228,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.414473684,
+        "prediction": 0.11064611551351351
+      },
+      {
+        "row_index": 54,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 447,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": 0.133333333,
+        "prediction": 0.13584763283783782
+      },
+      {
+        "row_index": 55,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 448,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.1,
+        "prediction": 0.13584763283783782
+      },
+      {
+        "row_index": 56,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 1286,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": 0.0,
+        "prediction": 0.13584763283783782
+      },
+      {
+        "row_index": 57,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 3121,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.166666667,
+        "prediction": 0.13584763283783782
+      },
+      {
+        "row_index": 58,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 3218,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.066666667,
+        "prediction": 0.13584763283783782
+      },
+      {
+        "row_index": 59,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 854,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": -0.057142857,
+        "prediction": 0.1100922439736842
+      },
+      {
+        "row_index": 60,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 1267,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": -0.271428571,
+        "prediction": 0.1100922439736842
+      },
+      {
+        "row_index": 61,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 3120,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": 0.657142857,
+        "prediction": 0.1100922439736842
+      },
+      {
+        "row_index": 62,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 3132,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": 0.314285714,
+        "prediction": 0.1100922439736842
+      },
+      {
+        "row_index": 63,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2580,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.857142857,
+        "prediction": 0.07638817337837839
+      },
+      {
+        "row_index": 64,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2588,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.214285714,
+        "prediction": 0.07638817337837839
+      },
+      {
+        "row_index": 65,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2593,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.5,
+        "prediction": 0.07638817337837839
+      },
+      {
+        "row_index": 66,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2598,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.357142857,
+        "prediction": 0.07638817337837839
+      },
+      {
+        "row_index": 67,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2602,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.071428571,
+        "prediction": 0.07638817337837839
+      },
+      {
+        "row_index": 68,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1271,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.152777778,
+        "prediction": 0.11430108624324324
+      },
+      {
+        "row_index": 69,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3119,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.055555556,
+        "prediction": 0.11430108624324324
+      },
+      {
+        "row_index": 70,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3133,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": -0.083333333,
+        "prediction": 0.11430108624324324
+      },
+      {
+        "row_index": 71,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3176,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.402777778,
+        "prediction": 0.11430108624324324
+      },
+      {
+        "row_index": 72,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3243,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.069444444,
+        "prediction": 0.11430108624324324
+      },
+      {
+        "row_index": 73,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 72,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.333333333,
+        "prediction": -0.007537960272727271
+      },
+      {
+        "row_index": 74,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 639,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.055555556,
+        "prediction": -0.007537960272727271
+      },
+      {
+        "row_index": 75,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 3424,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.166666667,
+        "prediction": -0.007537960272727271
+      },
+      {
+        "row_index": 76,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 702,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.051724138,
+        "prediction": -0.0492472672
+      },
+      {
+        "row_index": 77,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1873,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": -0.133333333,
+        "prediction": -0.03752654042857143
+      },
+      {
+        "row_index": 78,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1875,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": -0.1,
+        "prediction": -0.03752654042857143
+      },
+      {
+        "row_index": 79,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1877,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": 0.233333333,
+        "prediction": -0.03752654042857143
+      },
+      {
+        "row_index": 80,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 2748,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": 0.066666667,
+        "prediction": -0.03752654042857143
+      },
+      {
+        "row_index": 81,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1272,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": -0.3,
+        "prediction": -0.021246474
+      },
+      {
+        "row_index": 82,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1275,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": 0.247619048,
+        "prediction": -0.021246474
+      },
+      {
+        "row_index": 83,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1276,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": -0.201587302,
+        "prediction": -0.021246474
+      },
+      {
+        "row_index": 84,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 941,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.027777778,
+        "prediction": 0.0505500728
+      },
+      {
+        "row_index": 85,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 956,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.126984127,
+        "prediction": 0.0505500728
+      },
+      {
+        "row_index": 86,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 957,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.5,
+        "prediction": 0.0505500728
+      },
+      {
+        "row_index": 87,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 960,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.152777778,
+        "prediction": 0.0505500728
+      }
+    ],
+    "TEMPORAL_PRIMARY": [
+      {
+        "row_index": 0,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 211,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.019090644,
+        "prediction": 0.05483879941811987
+      },
+      {
+        "row_index": 1,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 212,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.0360036,
+        "prediction": 0.05483879941811987
+      },
+      {
+        "row_index": 2,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 216,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.118014184,
+        "prediction": 0.05483879941811987
+      },
+      {
+        "row_index": 3,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 217,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": 0.107894737,
+        "prediction": 0.05483879941811987
+      },
+      {
+        "row_index": 4,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 218,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.010350776,
+        "prediction": 0.05483879941811987
+      },
+      {
+        "row_index": 5,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 470,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.181768707,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 6,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 471,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.156716418,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 7,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 474,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.087878788,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 8,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 475,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.076244666,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 9,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 476,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.06440483,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 10,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 479,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.114398135,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 11,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 2296,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.057575758,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 12,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 287,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.040639269,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 13,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 474,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": 0.029187125,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 14,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 479,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": 0.075,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 15,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 483,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.053058677,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 16,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 547,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.078827839,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 17,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1270,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.0225242,
+        "prediction": 0.03389269324165518
+      },
+      {
+        "row_index": 18,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1271,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": 0.01546003,
+        "prediction": 0.03389269324165518
+      },
+      {
+        "row_index": 19,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1272,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.060089165,
+        "prediction": -0.0366368688695
+      },
+      {
+        "row_index": 20,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1403,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.135703064,
+        "prediction": 0.03389269324165518
+      },
+      {
+        "row_index": 21,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3380,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": 0.029106858,
+        "prediction": 0.03389269324165518
+      },
+      {
+        "row_index": 22,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 216,
+        "Year": 5,
+        "fold_key": 206,
+        "y_true": -0.098709452,
+        "prediction": 0.05483879941811987
+      },
+      {
+        "row_index": 23,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 217,
+        "Year": 5,
+        "fold_key": 206,
+        "y_true": -0.108949911,
+        "prediction": 0.05483879941811987
+      },
+      {
+        "row_index": 24,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 531,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.114193548,
+        "prediction": 0.030381641304086875
+      },
+      {
+        "row_index": 25,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 700,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": -0.104545455,
+        "prediction": 0.05267655262822205
+      },
+      {
+        "row_index": 26,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 701,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.165909091,
+        "prediction": 0.03386980759794945
+      },
+      {
+        "row_index": 27,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 702,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.132284382,
+        "prediction": 0.015927719571510856
+      },
+      {
+        "row_index": 28,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 706,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.010695187,
+        "prediction": 0.03386980759794945
+      },
+      {
+        "row_index": 29,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 707,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.071867322,
+        "prediction": 0.03386980759794945
+      },
+      {
+        "row_index": 30,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 692,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.019047619,
+        "prediction": 0.037597629026907525
+      },
+      {
+        "row_index": 31,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 695,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.111742424,
+        "prediction": 0.037597629026907525
+      },
+      {
+        "row_index": 32,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 700,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": -0.012096774,
+        "prediction": -0.022268949994462134
+      },
+      {
+        "row_index": 33,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 704,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.093137255,
+        "prediction": 0.037597629026907525
+      },
+      {
+        "row_index": 34,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1476,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.094202899,
+        "prediction": 0.03406958740972411
+      },
+      {
+        "row_index": 35,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1482,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.097424412,
+        "prediction": 0.03406958740972411
+      },
+      {
+        "row_index": 36,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1484,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.114379085,
+        "prediction": 0.03406958740972411
+      },
+      {
+        "row_index": 37,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1533,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.0,
+        "prediction": 0.03406958740972411
+      },
+      {
+        "row_index": 38,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1810,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": -0.037084399,
+        "prediction": 0.03406958740972411
+      },
+      {
+        "row_index": 39,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2034,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.092885375,
+        "prediction": 0.03406958740972409
+      },
+      {
+        "row_index": 40,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2035,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.092258065,
+        "prediction": 0.03406958740972409
+      },
+      {
+        "row_index": 41,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2066,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.093877551,
+        "prediction": 0.03406958740972409
+      },
+      {
+        "row_index": 42,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2104,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": -0.000351865,
+        "prediction": 0.03406958740972409
+      },
+      {
+        "row_index": 43,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 3156,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": -0.025918762,
+        "prediction": 0.03406958740972409
+      },
+      {
+        "row_index": 44,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 424,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": 0.012820513,
+        "prediction": 0.0351549844714669
+      },
+      {
+        "row_index": 45,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 433,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.194235589,
+        "prediction": 0.0351549844714669
+      },
+      {
+        "row_index": 46,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 435,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": 0.058897243,
+        "prediction": 0.0351549844714669
+      },
+      {
+        "row_index": 47,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3124,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.093984962,
+        "prediction": 0.0351549844714669
+      },
+      {
+        "row_index": 48,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3228,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.119047619,
+        "prediction": 0.0351549844714669
+      },
+      {
+        "row_index": 49,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 424,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.221491228,
+        "prediction": 0.0351549844714669
+      },
+      {
+        "row_index": 50,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 433,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": -0.153508772,
+        "prediction": 0.0351549844714669
+      },
+      {
+        "row_index": 51,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 435,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.120614035,
+        "prediction": 0.0351549844714669
+      },
+      {
+        "row_index": 52,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3124,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.129385965,
+        "prediction": 0.0351549844714669
+      },
+      {
+        "row_index": 53,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3228,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.414473684,
+        "prediction": 0.0351549844714669
+      },
+      {
+        "row_index": 54,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 447,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": 0.133333333,
+        "prediction": 0.03743768336582211
+      },
+      {
+        "row_index": 55,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 448,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.1,
+        "prediction": 0.03743768336582211
+      },
+      {
+        "row_index": 56,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 1286,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": 0.0,
+        "prediction": 0.03743768336582211
+      },
+      {
+        "row_index": 57,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 3121,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.166666667,
+        "prediction": 0.03743768336582211
+      },
+      {
+        "row_index": 58,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 3218,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.066666667,
+        "prediction": 0.03743768336582211
+      },
+      {
+        "row_index": 59,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 854,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": -0.057142857,
+        "prediction": 0.037508080591144986
+      },
+      {
+        "row_index": 60,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 1267,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": -0.271428571,
+        "prediction": 0.037508080591144986
+      },
+      {
+        "row_index": 61,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 3120,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": 0.657142857,
+        "prediction": 0.037508080591144986
+      },
+      {
+        "row_index": 62,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 3132,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": 0.314285714,
+        "prediction": 0.037508080591144986
+      },
+      {
+        "row_index": 63,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2580,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.857142857,
+        "prediction": 0.037437683365822115
+      },
+      {
+        "row_index": 64,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2588,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.214285714,
+        "prediction": 0.037437683365822115
+      },
+      {
+        "row_index": 65,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2593,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.5,
+        "prediction": 0.037437683365822115
+      },
+      {
+        "row_index": 66,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2598,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.357142857,
+        "prediction": 0.037437683365822115
+      },
+      {
+        "row_index": 67,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2602,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.071428571,
+        "prediction": 0.037437683365822115
+      },
+      {
+        "row_index": 68,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1271,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.152777778,
+        "prediction": 0.03389269324165518
+      },
+      {
+        "row_index": 69,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3119,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.055555556,
+        "prediction": 0.03389269324165518
+      },
+      {
+        "row_index": 70,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3133,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": -0.083333333,
+        "prediction": 0.03389269324165518
+      },
+      {
+        "row_index": 71,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3176,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.402777778,
+        "prediction": 0.03389269324165518
+      },
+      {
+        "row_index": 72,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3243,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.069444444,
+        "prediction": 0.03389269324165518
+      },
+      {
+        "row_index": 73,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 72,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.333333333,
+        "prediction": 0.03727665856310134
+      },
+      {
+        "row_index": 74,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 639,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.055555556,
+        "prediction": 0.03727665856310134
+      },
+      {
+        "row_index": 75,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 3424,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.166666667,
+        "prediction": 0.03727665856310134
+      },
+      {
+        "row_index": 76,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 702,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.051724138,
+        "prediction": 0.18397678862952435
+      },
+      {
+        "row_index": 77,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1873,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": -0.133333333,
+        "prediction": 0.029305616864565388
+      },
+      {
+        "row_index": 78,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1875,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": -0.1,
+        "prediction": 0.029305616864565388
+      },
+      {
+        "row_index": 79,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1877,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": 0.233333333,
+        "prediction": 0.029305616864565388
+      },
+      {
+        "row_index": 80,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 2748,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": 0.066666667,
+        "prediction": 0.029305616864565388
+      },
+      {
+        "row_index": 81,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1272,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": -0.3,
+        "prediction": 0.030977251544609893
+      },
+      {
+        "row_index": 82,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1275,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": 0.247619048,
+        "prediction": 0.03688236212782625
+      },
+      {
+        "row_index": 83,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1276,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": -0.201587302,
+        "prediction": 0.03688236212782625
+      },
+      {
+        "row_index": 84,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 941,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.027777778,
+        "prediction": 0.03726895008213952
+      },
+      {
+        "row_index": 85,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 956,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.126984127,
+        "prediction": 0.03726895008213952
+      },
+      {
+        "row_index": 86,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 957,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.5,
+        "prediction": 0.03726895008213952
+      },
+      {
+        "row_index": 87,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 960,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.152777778,
+        "prediction": 0.03726895008213952
+      }
+    ],
+    "NON_TEMPORAL_SAME_FEATURES": [
+      {
+        "row_index": 0,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 211,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.019090644,
+        "prediction": 0.07561111837083899
+      },
+      {
+        "row_index": 1,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 212,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.0360036,
+        "prediction": 0.07561111837083899
+      },
+      {
+        "row_index": 2,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 216,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.118014184,
+        "prediction": 0.07561111837083899
+      },
+      {
+        "row_index": 3,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 217,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": 0.107894737,
+        "prediction": 0.07561111837083899
+      },
+      {
+        "row_index": 4,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 218,
+        "Year": 7,
+        "fold_key": 206,
+        "y_true": -0.010350776,
+        "prediction": 0.07561111837083899
+      },
+      {
+        "row_index": 5,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 470,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.181768707,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 6,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 471,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.156716418,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 7,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 474,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.087878788,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 8,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 475,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.076244666,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 9,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 476,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.06440483,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 10,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 479,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.114398135,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 11,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 2296,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.057575758,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 12,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 287,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.040639269,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 13,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 474,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": 0.029187125,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 14,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 479,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": 0.075,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 15,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 483,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.053058677,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 16,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 547,
+        "Year": 8,
+        "fold_key": 469,
+        "y_true": -0.078827839,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 17,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1270,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.0225242,
+        "prediction": 0.07394871057328171
+      },
+      {
+        "row_index": 18,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1271,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": 0.01546003,
+        "prediction": 0.07394871057328171
+      },
+      {
+        "row_index": 19,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1272,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.060089165,
+        "prediction": -0.05210204738715709
+      },
+      {
+        "row_index": 20,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1403,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": -0.135703064,
+        "prediction": 0.07394871057328171
+      },
+      {
+        "row_index": 21,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3380,
+        "Year": 8,
+        "fold_key": 3132,
+        "y_true": 0.029106858,
+        "prediction": 0.07394871057328171
+      },
+      {
+        "row_index": 22,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 216,
+        "Year": 5,
+        "fold_key": 206,
+        "y_true": -0.098709452,
+        "prediction": 0.07561111837083899
+      },
+      {
+        "row_index": 23,
+        "TreatmentLessonConstructId": 206,
+        "QuestionConstructId": 217,
+        "Year": 5,
+        "fold_key": 206,
+        "y_true": -0.108949911,
+        "prediction": 0.07561111837083899
+      },
+      {
+        "row_index": 24,
+        "TreatmentLessonConstructId": 469,
+        "QuestionConstructId": 531,
+        "Year": 7,
+        "fold_key": 469,
+        "y_true": 0.114193548,
+        "prediction": 0.09063538039384661
+      },
+      {
+        "row_index": 25,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 700,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": -0.104545455,
+        "prediction": -0.0074921973736785654
+      },
+      {
+        "row_index": 26,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 701,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.165909091,
+        "prediction": 0.07583942551884039
+      },
+      {
+        "row_index": 27,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 702,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.132284382,
+        "prediction": 0.030440002134559524
+      },
+      {
+        "row_index": 28,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 706,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.010695187,
+        "prediction": 0.07583942551884039
+      },
+      {
+        "row_index": 29,
+        "TreatmentLessonConstructId": 703,
+        "QuestionConstructId": 707,
+        "Year": 7,
+        "fold_key": 703,
+        "y_true": 0.071867322,
+        "prediction": 0.07583942551884039
+      },
+      {
+        "row_index": 30,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 692,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.019047619,
+        "prediction": 0.08149063355276814
+      },
+      {
+        "row_index": 31,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 695,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.111742424,
+        "prediction": 0.08149063355276814
+      },
+      {
+        "row_index": 32,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 700,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": -0.012096774,
+        "prediction": -0.04443739543463548
+      },
+      {
+        "row_index": 33,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 704,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.093137255,
+        "prediction": 0.08149063355276814
+      },
+      {
+        "row_index": 34,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1476,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.094202899,
+        "prediction": 0.0762483031205861
+      },
+      {
+        "row_index": 35,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1482,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.097424412,
+        "prediction": 0.0762483031205861
+      },
+      {
+        "row_index": 36,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1484,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.114379085,
+        "prediction": 0.0762483031205861
+      },
+      {
+        "row_index": 37,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1533,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": 0.0,
+        "prediction": 0.0762483031205861
+      },
+      {
+        "row_index": 38,
+        "TreatmentLessonConstructId": 1470,
+        "QuestionConstructId": 1810,
+        "Year": 9,
+        "fold_key": 1470,
+        "y_true": -0.037084399,
+        "prediction": 0.0762483031205861
+      },
+      {
+        "row_index": 39,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2034,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.092885375,
+        "prediction": 0.07624830312058611
+      },
+      {
+        "row_index": 40,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2035,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.092258065,
+        "prediction": 0.07624830312058611
+      },
+      {
+        "row_index": 41,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2066,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": 0.093877551,
+        "prediction": 0.07624830312058611
+      },
+      {
+        "row_index": 42,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 2104,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": -0.000351865,
+        "prediction": 0.07624830312058611
+      },
+      {
+        "row_index": 43,
+        "TreatmentLessonConstructId": 2028,
+        "QuestionConstructId": 3156,
+        "Year": 10,
+        "fold_key": 2028,
+        "y_true": -0.025918762,
+        "prediction": 0.07624830312058611
+      },
+      {
+        "row_index": 44,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 424,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": 0.012820513,
+        "prediction": 0.10061870997100067
+      },
+      {
+        "row_index": 45,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 433,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.194235589,
+        "prediction": 0.10061870997100067
+      },
+      {
+        "row_index": 46,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 435,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": 0.058897243,
+        "prediction": 0.10061870997100067
+      },
+      {
+        "row_index": 47,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3124,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.093984962,
+        "prediction": 0.10061870997100067
+      },
+      {
+        "row_index": 48,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3228,
+        "Year": 6,
+        "fold_key": 432,
+        "y_true": -0.119047619,
+        "prediction": 0.10061870997100067
+      },
+      {
+        "row_index": 49,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 424,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.221491228,
+        "prediction": 0.10061870997100067
+      },
+      {
+        "row_index": 50,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 433,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": -0.153508772,
+        "prediction": 0.10061870997100067
+      },
+      {
+        "row_index": 51,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 435,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.120614035,
+        "prediction": 0.10061870997100067
+      },
+      {
+        "row_index": 52,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3124,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.129385965,
+        "prediction": 0.10061870997100067
+      },
+      {
+        "row_index": 53,
+        "TreatmentLessonConstructId": 432,
+        "QuestionConstructId": 3228,
+        "Year": 7,
+        "fold_key": 432,
+        "y_true": 0.414473684,
+        "prediction": 0.10061870997100067
+      },
+      {
+        "row_index": 54,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 447,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": 0.133333333,
+        "prediction": 0.07981353795819117
+      },
+      {
+        "row_index": 55,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 448,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.1,
+        "prediction": 0.07981353795819117
+      },
+      {
+        "row_index": 56,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 1286,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": 0.0,
+        "prediction": 0.07981353795819117
+      },
+      {
+        "row_index": 57,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 3121,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.166666667,
+        "prediction": 0.07981353795819117
+      },
+      {
+        "row_index": 58,
+        "TreatmentLessonConstructId": 440,
+        "QuestionConstructId": 3218,
+        "Year": 7,
+        "fold_key": 440,
+        "y_true": -0.066666667,
+        "prediction": 0.07981353795819117
+      },
+      {
+        "row_index": 59,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 854,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": -0.057142857,
+        "prediction": 0.07955167846018024
+      },
+      {
+        "row_index": 60,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 1267,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": -0.271428571,
+        "prediction": 0.07955167846018024
+      },
+      {
+        "row_index": 61,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 3120,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": 0.657142857,
+        "prediction": 0.07955167846018024
+      },
+      {
+        "row_index": 62,
+        "TreatmentLessonConstructId": 855,
+        "QuestionConstructId": 3132,
+        "Year": 7,
+        "fold_key": 855,
+        "y_true": 0.314285714,
+        "prediction": 0.07955167846018024
+      },
+      {
+        "row_index": 63,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2580,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.857142857,
+        "prediction": 0.07496928583875141
+      },
+      {
+        "row_index": 64,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2588,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.214285714,
+        "prediction": 0.07496928583875141
+      },
+      {
+        "row_index": 65,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2593,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.5,
+        "prediction": 0.07496928583875141
+      },
+      {
+        "row_index": 66,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2598,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.357142857,
+        "prediction": 0.07496928583875141
+      },
+      {
+        "row_index": 67,
+        "TreatmentLessonConstructId": 2563,
+        "QuestionConstructId": 2602,
+        "Year": 7,
+        "fold_key": 2563,
+        "y_true": 0.071428571,
+        "prediction": 0.07496928583875141
+      },
+      {
+        "row_index": 68,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 1271,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.152777778,
+        "prediction": 0.07394871057328171
+      },
+      {
+        "row_index": 69,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3119,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.055555556,
+        "prediction": 0.07394871057328171
+      },
+      {
+        "row_index": 70,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3133,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": -0.083333333,
+        "prediction": 0.07394871057328171
+      },
+      {
+        "row_index": 71,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3176,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.402777778,
+        "prediction": 0.07394871057328171
+      },
+      {
+        "row_index": 72,
+        "TreatmentLessonConstructId": 3132,
+        "QuestionConstructId": 3243,
+        "Year": 7,
+        "fold_key": 3132,
+        "y_true": 0.069444444,
+        "prediction": 0.07394871057328171
+      },
+      {
+        "row_index": 73,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 72,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.333333333,
+        "prediction": 0.08024099836107959
+      },
+      {
+        "row_index": 74,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 639,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.055555556,
+        "prediction": 0.08024099836107959
+      },
+      {
+        "row_index": 75,
+        "TreatmentLessonConstructId": 638,
+        "QuestionConstructId": 3424,
+        "Year": 8,
+        "fold_key": 638,
+        "y_true": -0.166666667,
+        "prediction": 0.08024099836107959
+      },
+      {
+        "row_index": 76,
+        "TreatmentLessonConstructId": 690,
+        "QuestionConstructId": 702,
+        "Year": 8,
+        "fold_key": 690,
+        "y_true": 0.051724138,
+        "prediction": 0.13639469396798845
+      },
+      {
+        "row_index": 77,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1873,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": -0.133333333,
+        "prediction": 0.08121082959235665
+      },
+      {
+        "row_index": 78,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1875,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": -0.1,
+        "prediction": 0.08121082959235665
+      },
+      {
+        "row_index": 79,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 1877,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": 0.233333333,
+        "prediction": 0.08121082959235665
+      },
+      {
+        "row_index": 80,
+        "TreatmentLessonConstructId": 1872,
+        "QuestionConstructId": 2748,
+        "Year": 8,
+        "fold_key": 1872,
+        "y_true": 0.066666667,
+        "prediction": 0.08121082959235665
+      },
+      {
+        "row_index": 81,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1272,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": -0.3,
+        "prediction": 0.0309772515446099
+      },
+      {
+        "row_index": 82,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1275,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": 0.247619048,
+        "prediction": 0.08005048018875474
+      },
+      {
+        "row_index": 83,
+        "TreatmentLessonConstructId": 3133,
+        "QuestionConstructId": 1276,
+        "Year": 8,
+        "fold_key": 3133,
+        "y_true": -0.201587302,
+        "prediction": 0.08005048018875474
+      },
+      {
+        "row_index": 84,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 941,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.027777778,
+        "prediction": 0.05743591545096313
+      },
+      {
+        "row_index": 85,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 956,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.126984127,
+        "prediction": 0.05743591545096313
+      },
+      {
+        "row_index": 86,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 957,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.5,
+        "prediction": 0.05743591545096313
+      },
+      {
+        "row_index": 87,
+        "TreatmentLessonConstructId": 935,
+        "QuestionConstructId": 960,
+        "Year": 10,
+        "fold_key": 935,
+        "y_true": 0.152777778,
+        "prediction": 0.05743591545096313
+      }
+    ]
+  },
   "coverage_by_fold": [
     {
       "fold": "LOTO_206",

@@ -1,5 +1,6 @@
 import argparse
 import itertools
+import math
 import os
 import sys
 
@@ -168,6 +169,20 @@ def build_predictions_export(bench: pd.DataFrame, predictions_all: pd.DataFrame,
     return export
 
 
+def sanitize_for_json(obj):
+    if isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    if isinstance(obj, dict):
+        return {k: sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [sanitize_for_json(v) for v in obj]
+    if isinstance(obj, tuple):
+        return [sanitize_for_json(v) for v in obj]
+    return obj
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Option A construct-level CATE benchmark")
     parser.add_argument("--data-dir", default="data")
@@ -290,18 +305,22 @@ def main() -> int:
     if args.manifest:
         import json
 
+        payload = sanitize_for_json(
+            {
+                "manifest": manifest,
+                "metrics": metrics_export,
+                "pairwise_ci": pairwise_ci.to_dict(orient="records"),
+                "predictions": predictions_export,
+                "coverage_by_fold": coverage_table.to_dict(orient="records"),
+            }
+        )
         with open(args.manifest, "w", encoding="utf-8") as handle:
             json.dump(
-                {
-                    "manifest": manifest,
-                    "metrics": metrics_export,
-                    "pairwise_ci": pairwise_ci.to_dict(orient="records"),
-                    "predictions": predictions_export,
-                    "coverage_by_fold": coverage_table.to_dict(orient="records"),
-                },
+                payload,
                 handle,
                 indent=2,
                 ensure_ascii=False,
+                allow_nan=False,
             )
         print(f"Manifest written to {args.manifest}")
 
