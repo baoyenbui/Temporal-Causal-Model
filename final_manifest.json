@@ -1,7 +1,7 @@
 {
   "manifest": {
-    "commit": "87ce891822b8e68113c02312d93bdccad9823e07",
-    "git_dirty": true,
+    "commit": "026e6d546d0ca34822bdf0423c2c64d55eb8d0f9",
+    "git_dirty": false,
     "target": "ate_k_1__",
     "control": {
       "type": "primary",
@@ -24,12 +24,9 @@
     ],
     "sub_manifests": {
       "baseline": {
-        "commit": "87ce891822b8e68113c02312d93bdccad9823e07",
-        "git_dirty": true,
-        "git_changed_paths": [
-          "final_manifest.json",
-          "run_option_a.py"
-        ],
+        "commit": "026e6d546d0ca34822bdf0423c2c64d55eb8d0f9",
+        "git_dirty": false,
+        "git_changed_paths": [],
         "target": "ate_k_1__",
         "control": {
           "type": "primary",
@@ -77,17 +74,14 @@
         "n_failures": 0,
         "predictions_sha256": "09D111D4C1AA552E893CE45FFDA445ABFA95AA79B5FDA05D8BCAD93519C6CC69",
         "results_sha256": "7AA59488CEAE51BD86FB213C223BB3034F253FCDD34AD3B70E2CB9A512327251",
-        "runtime_seconds": 0.544,
+        "runtime_seconds": 0.522,
         "python": "3.13.5",
         "platform": "Windows-11-10.0.26200-SP0"
       },
       "temporal": {
-        "commit": "87ce891822b8e68113c02312d93bdccad9823e07",
-        "git_dirty": true,
-        "git_changed_paths": [
-          "final_manifest.json",
-          "run_option_a.py"
-        ],
+        "commit": "026e6d546d0ca34822bdf0423c2c64d55eb8d0f9",
+        "git_dirty": false,
+        "git_changed_paths": [],
         "target": "ate_k_1__",
         "control": {
           "type": "primary",
@@ -143,19 +137,16 @@
         },
         "input_hashes_all_match": true,
         "n_failures": 0,
-        "predictions_sha256": "0BBD8D29835030C52A39667D651AA0F287779AFAFBCAED9F057756F959FE71A5",
-        "results_sha256": "38F3B237451FC9B3C794F8421136EEDCDD48BAC4A24948F3EC52C116289C479C",
-        "runtime_seconds": 152.734,
+        "predictions_sha256": "79FA93EE59DB0148056551B666C004D125ACECB1846B6A677156B506C8B6A5E2",
+        "results_sha256": "9D37967980B5E3E0F81FEA2345AFB387D424D310DF5DE33B5A66CA75C86827E8",
+        "runtime_seconds": 161.349,
         "python": "3.13.5",
         "platform": "Windows-11-10.0.26200-SP0"
       },
       "shuffled": {
-        "commit": "87ce891822b8e68113c02312d93bdccad9823e07",
-        "git_dirty": true,
-        "git_changed_paths": [
-          "final_manifest.json",
-          "run_option_a.py"
-        ],
+        "commit": "026e6d546d0ca34822bdf0423c2c64d55eb8d0f9",
+        "git_dirty": false,
+        "git_changed_paths": [],
         "target": "ate_k_1__",
         "control": {
           "type": "primary",
@@ -211,15 +202,15 @@
         },
         "input_hashes_all_match": true,
         "n_failures": 0,
-        "predictions_sha256": "2147FB92E138F9D1CABFF2B8E49A87224E6A1025CF6272809AB419F4CD2814DF",
+        "predictions_sha256": "8E9D394BA3CB6569C4F192C73F00A837127AB1C2A18A5C6FA1E3787C61CAD5CB",
         "results_sha256": "65D9161F111FFCEC95DB20C9A0847BA4BFC1369EAF969BEB0F99FDE7FE8C9F9C",
-        "runtime_seconds": 218.019,
+        "runtime_seconds": 242.605,
         "python": "3.13.5",
         "platform": "Windows-11-10.0.26200-SP0"
       }
     },
     "input_hashes_all_match": true,
-    "predictions_sha256": "4E46B29E120A65B8A4785654490835B9E14524E07D04511CF93C7020D581A7B8",
+    "predictions_sha256": "80D9B45CB4932DF12D52F4A655CF5199BE7754C14411EE7C6EAB9423B410A3EA",
     "n_failures_total": 0
   },
   "metrics": {
@@ -237,10 +228,10 @@
       "n_predicted": 88,
       "n_missing": 0,
       "MAE": 0.1341859547558716,
-      "MAE_lo": 0.09879889450639014,
+      "MAE_lo": 0.09879889450639012,
       "MAE_hi": 0.18393799541014602,
       "RMSE": 0.19121807462132903,
-      "Spearman": -0.04895854203467306,
+      "Spearman": -0.05015168278287793,
       "SignAgreement": 0.6136363636363636
     },
     "TRAIN_MEAN": {
@@ -297,7 +288,7 @@
       "n_shared": 88,
       "MAE_diff_a_minus_b": 0.002267142141855666,
       "diff_lo": -0.009475043325628579,
-      "diff_hi": 0.011298156756524978
+      "diff_hi": 0.011298156756524964
     },
     {
       "method_a": "ZERO_EFFECT",
@@ -320,7 +311,7 @@
       "method_b": "TEMPORAL_PRIMARY",
       "n_shared": 88,
       "MAE_diff_a_minus_b": 0.00028963457324496233,
-      "diff_lo": -0.004861489621903385,
+      "diff_lo": -0.004861489621903371,
       "diff_hi": 0.005904862162999058
     },
     {
@@ -329,14 +320,14 @@
       "n_shared": 88,
       "MAE_diff_a_minus_b": 0.0009442357026060999,
       "diff_lo": -0.004308486174829298,
-      "diff_hi": 0.007540287250445954
+      "diff_hi": 0.007540287250445953
     },
     {
       "method_a": "YEAR_STRATIFIED_MEAN",
       "method_b": "TEMPORAL_PRIMARY",
       "n_shared": 88,
       "MAE_diff_a_minus_b": 0.002918371108079243,
-      "diff_lo": -0.013258233922915722,
+      "diff_lo": -0.013258233922915724,
       "diff_hi": 0.023376917860430682
     },
     {
@@ -344,7 +335,7 @@
       "method_b": "NON_TEMPORAL_SAME_FEATURES",
       "n_shared": 88,
       "MAE_diff_a_minus_b": 0.0035729722374403805,
-      "diff_lo": -0.012691786202718597,
+      "diff_lo": -0.012691786202718653,
       "diff_hi": 0.024334910875111207
     },
     {
@@ -352,8 +343,8 @@
       "method_b": "NON_TEMPORAL_SAME_FEATURES",
       "n_shared": 88,
       "MAE_diff_a_minus_b": 0.0006546011293611376,
-      "diff_lo": -0.0076094410689113035,
-      "diff_hi": 0.009080471875148571
+      "diff_lo": -0.007609441068911304,
+      "diff_hi": 0.009080471875148597
     }
   ],
   "predictions": {
@@ -2792,7 +2783,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.181768707,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 6,
@@ -2801,7 +2792,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.156716418,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 7,
@@ -2810,7 +2801,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.087878788,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 8,
@@ -2819,7 +2810,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.076244666,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 9,
@@ -2828,7 +2819,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.06440483,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 10,
@@ -2837,7 +2828,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.114398135,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 11,
@@ -2846,7 +2837,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.057575758,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 12,
@@ -2855,7 +2846,7 @@
         "Year": 8,
         "fold_key": 469,
         "y_true": -0.040639269,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 13,
@@ -2864,7 +2855,7 @@
         "Year": 8,
         "fold_key": 469,
         "y_true": 0.029187125,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 14,
@@ -2873,7 +2864,7 @@
         "Year": 8,
         "fold_key": 469,
         "y_true": 0.075,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 15,
@@ -2882,7 +2873,7 @@
         "Year": 8,
         "fold_key": 469,
         "y_true": -0.053058677,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 16,
@@ -2891,7 +2882,7 @@
         "Year": 8,
         "fold_key": 469,
         "y_true": -0.078827839,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 17,
@@ -2900,7 +2891,7 @@
         "Year": 8,
         "fold_key": 3132,
         "y_true": -0.0225242,
-        "prediction": 0.03389269324165518
+        "prediction": 0.033892693241655183
       },
       {
         "row_index": 18,
@@ -2909,7 +2900,7 @@
         "Year": 8,
         "fold_key": 3132,
         "y_true": 0.01546003,
-        "prediction": 0.03389269324165518
+        "prediction": 0.033892693241655183
       },
       {
         "row_index": 19,
@@ -2918,7 +2909,7 @@
         "Year": 8,
         "fold_key": 3132,
         "y_true": -0.060089165,
-        "prediction": -0.0366368688695
+        "prediction": -0.036636868869499996
       },
       {
         "row_index": 20,
@@ -2927,7 +2918,7 @@
         "Year": 8,
         "fold_key": 3132,
         "y_true": -0.135703064,
-        "prediction": 0.03389269324165518
+        "prediction": 0.033892693241655183
       },
       {
         "row_index": 21,
@@ -2936,7 +2927,7 @@
         "Year": 8,
         "fold_key": 3132,
         "y_true": 0.029106858,
-        "prediction": 0.03389269324165518
+        "prediction": 0.033892693241655183
       },
       {
         "row_index": 22,
@@ -2963,7 +2954,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.114193548,
-        "prediction": 0.030381641304086875
+        "prediction": 0.030381641304086895
       },
       {
         "row_index": 25,
@@ -2981,7 +2972,7 @@
         "Year": 7,
         "fold_key": 703,
         "y_true": 0.165909091,
-        "prediction": 0.03386980759794945
+        "prediction": 0.033869807597949435
       },
       {
         "row_index": 27,
@@ -2999,7 +2990,7 @@
         "Year": 7,
         "fold_key": 703,
         "y_true": 0.010695187,
-        "prediction": 0.03386980759794945
+        "prediction": 0.033869807597949435
       },
       {
         "row_index": 29,
@@ -3008,7 +2999,7 @@
         "Year": 7,
         "fold_key": 703,
         "y_true": 0.071867322,
-        "prediction": 0.03386980759794945
+        "prediction": 0.033869807597949435
       },
       {
         "row_index": 30,
@@ -3053,7 +3044,7 @@
         "Year": 9,
         "fold_key": 1470,
         "y_true": 0.094202899,
-        "prediction": 0.03406958740972411
+        "prediction": 0.03406958740972409
       },
       {
         "row_index": 35,
@@ -3062,7 +3053,7 @@
         "Year": 9,
         "fold_key": 1470,
         "y_true": 0.097424412,
-        "prediction": 0.03406958740972411
+        "prediction": 0.03406958740972409
       },
       {
         "row_index": 36,
@@ -3071,7 +3062,7 @@
         "Year": 9,
         "fold_key": 1470,
         "y_true": 0.114379085,
-        "prediction": 0.03406958740972411
+        "prediction": 0.03406958740972409
       },
       {
         "row_index": 37,
@@ -3080,7 +3071,7 @@
         "Year": 9,
         "fold_key": 1470,
         "y_true": 0.0,
-        "prediction": 0.03406958740972411
+        "prediction": 0.03406958740972409
       },
       {
         "row_index": 38,
@@ -3089,7 +3080,7 @@
         "Year": 9,
         "fold_key": 1470,
         "y_true": -0.037084399,
-        "prediction": 0.03406958740972411
+        "prediction": 0.03406958740972409
       },
       {
         "row_index": 39,
@@ -3098,7 +3089,7 @@
         "Year": 10,
         "fold_key": 2028,
         "y_true": 0.092885375,
-        "prediction": 0.03406958740972409
+        "prediction": 0.0340695874097241
       },
       {
         "row_index": 40,
@@ -3107,7 +3098,7 @@
         "Year": 10,
         "fold_key": 2028,
         "y_true": 0.092258065,
-        "prediction": 0.03406958740972409
+        "prediction": 0.0340695874097241
       },
       {
         "row_index": 41,
@@ -3116,7 +3107,7 @@
         "Year": 10,
         "fold_key": 2028,
         "y_true": 0.093877551,
-        "prediction": 0.03406958740972409
+        "prediction": 0.0340695874097241
       },
       {
         "row_index": 42,
@@ -3125,7 +3116,7 @@
         "Year": 10,
         "fold_key": 2028,
         "y_true": -0.000351865,
-        "prediction": 0.03406958740972409
+        "prediction": 0.0340695874097241
       },
       {
         "row_index": 43,
@@ -3134,7 +3125,7 @@
         "Year": 10,
         "fold_key": 2028,
         "y_true": -0.025918762,
-        "prediction": 0.03406958740972409
+        "prediction": 0.0340695874097241
       },
       {
         "row_index": 44,
@@ -3233,7 +3224,7 @@
         "Year": 7,
         "fold_key": 440,
         "y_true": 0.133333333,
-        "prediction": 0.03743768336582211
+        "prediction": 0.037437683365822115
       },
       {
         "row_index": 55,
@@ -3242,7 +3233,7 @@
         "Year": 7,
         "fold_key": 440,
         "y_true": -0.1,
-        "prediction": 0.03743768336582211
+        "prediction": 0.037437683365822115
       },
       {
         "row_index": 56,
@@ -3251,7 +3242,7 @@
         "Year": 7,
         "fold_key": 440,
         "y_true": 0.0,
-        "prediction": 0.03743768336582211
+        "prediction": 0.037437683365822115
       },
       {
         "row_index": 57,
@@ -3260,7 +3251,7 @@
         "Year": 7,
         "fold_key": 440,
         "y_true": -0.166666667,
-        "prediction": 0.03743768336582211
+        "prediction": 0.037437683365822115
       },
       {
         "row_index": 58,
@@ -3269,7 +3260,7 @@
         "Year": 7,
         "fold_key": 440,
         "y_true": -0.066666667,
-        "prediction": 0.03743768336582211
+        "prediction": 0.037437683365822115
       },
       {
         "row_index": 59,
@@ -3314,7 +3305,7 @@
         "Year": 7,
         "fold_key": 2563,
         "y_true": 0.857142857,
-        "prediction": 0.037437683365822115
+        "prediction": 0.03743768336582212
       },
       {
         "row_index": 64,
@@ -3323,7 +3314,7 @@
         "Year": 7,
         "fold_key": 2563,
         "y_true": 0.214285714,
-        "prediction": 0.037437683365822115
+        "prediction": 0.03743768336582212
       },
       {
         "row_index": 65,
@@ -3332,7 +3323,7 @@
         "Year": 7,
         "fold_key": 2563,
         "y_true": 0.5,
-        "prediction": 0.037437683365822115
+        "prediction": 0.03743768336582212
       },
       {
         "row_index": 66,
@@ -3341,7 +3332,7 @@
         "Year": 7,
         "fold_key": 2563,
         "y_true": 0.357142857,
-        "prediction": 0.037437683365822115
+        "prediction": 0.03743768336582212
       },
       {
         "row_index": 67,
@@ -3350,7 +3341,7 @@
         "Year": 7,
         "fold_key": 2563,
         "y_true": 0.071428571,
-        "prediction": 0.037437683365822115
+        "prediction": 0.03743768336582212
       },
       {
         "row_index": 68,
@@ -3359,7 +3350,7 @@
         "Year": 7,
         "fold_key": 3132,
         "y_true": 0.152777778,
-        "prediction": 0.03389269324165518
+        "prediction": 0.033892693241655183
       },
       {
         "row_index": 69,
@@ -3368,7 +3359,7 @@
         "Year": 7,
         "fold_key": 3132,
         "y_true": 0.055555556,
-        "prediction": 0.03389269324165518
+        "prediction": 0.033892693241655183
       },
       {
         "row_index": 70,
@@ -3377,7 +3368,7 @@
         "Year": 7,
         "fold_key": 3132,
         "y_true": -0.083333333,
-        "prediction": 0.03389269324165518
+        "prediction": 0.033892693241655183
       },
       {
         "row_index": 71,
@@ -3386,7 +3377,7 @@
         "Year": 7,
         "fold_key": 3132,
         "y_true": 0.402777778,
-        "prediction": 0.03389269324165518
+        "prediction": 0.033892693241655183
       },
       {
         "row_index": 72,
@@ -3395,7 +3386,7 @@
         "Year": 7,
         "fold_key": 3132,
         "y_true": 0.069444444,
-        "prediction": 0.03389269324165518
+        "prediction": 0.033892693241655183
       },
       {
         "row_index": 73,
@@ -3404,7 +3395,7 @@
         "Year": 8,
         "fold_key": 638,
         "y_true": -0.333333333,
-        "prediction": 0.03727665856310134
+        "prediction": 0.03727665856310135
       },
       {
         "row_index": 74,
@@ -3413,7 +3404,7 @@
         "Year": 8,
         "fold_key": 638,
         "y_true": -0.055555556,
-        "prediction": 0.03727665856310134
+        "prediction": 0.03727665856310135
       },
       {
         "row_index": 75,
@@ -3422,7 +3413,7 @@
         "Year": 8,
         "fold_key": 638,
         "y_true": -0.166666667,
-        "prediction": 0.03727665856310134
+        "prediction": 0.03727665856310135
       },
       {
         "row_index": 76,
@@ -3431,7 +3422,7 @@
         "Year": 8,
         "fold_key": 690,
         "y_true": 0.051724138,
-        "prediction": 0.18397678862952435
+        "prediction": 0.18397678862952438
       },
       {
         "row_index": 77,
@@ -3440,7 +3431,7 @@
         "Year": 8,
         "fold_key": 1872,
         "y_true": -0.133333333,
-        "prediction": 0.029305616864565388
+        "prediction": 0.029305616864565395
       },
       {
         "row_index": 78,
@@ -3449,7 +3440,7 @@
         "Year": 8,
         "fold_key": 1872,
         "y_true": -0.1,
-        "prediction": 0.029305616864565388
+        "prediction": 0.029305616864565395
       },
       {
         "row_index": 79,
@@ -3458,7 +3449,7 @@
         "Year": 8,
         "fold_key": 1872,
         "y_true": 0.233333333,
-        "prediction": 0.029305616864565388
+        "prediction": 0.029305616864565395
       },
       {
         "row_index": 80,
@@ -3467,7 +3458,7 @@
         "Year": 8,
         "fold_key": 1872,
         "y_true": 0.066666667,
-        "prediction": 0.029305616864565388
+        "prediction": 0.029305616864565395
       },
       {
         "row_index": 81,
@@ -3476,7 +3467,7 @@
         "Year": 8,
         "fold_key": 3133,
         "y_true": -0.3,
-        "prediction": 0.030977251544609893
+        "prediction": 0.030977251544609886
       },
       {
         "row_index": 82,
@@ -3485,7 +3476,7 @@
         "Year": 8,
         "fold_key": 3133,
         "y_true": 0.247619048,
-        "prediction": 0.03688236212782625
+        "prediction": 0.03688236212782623
       },
       {
         "row_index": 83,
@@ -3494,7 +3485,7 @@
         "Year": 8,
         "fold_key": 3133,
         "y_true": -0.201587302,
-        "prediction": 0.03688236212782625
+        "prediction": 0.03688236212782623
       },
       {
         "row_index": 84,
@@ -3503,7 +3494,7 @@
         "Year": 10,
         "fold_key": 935,
         "y_true": 0.027777778,
-        "prediction": 0.03726895008213952
+        "prediction": 0.03726895008213951
       },
       {
         "row_index": 85,
@@ -3512,7 +3503,7 @@
         "Year": 10,
         "fold_key": 935,
         "y_true": 0.126984127,
-        "prediction": 0.03726895008213952
+        "prediction": 0.03726895008213951
       },
       {
         "row_index": 86,
@@ -3521,7 +3512,7 @@
         "Year": 10,
         "fold_key": 935,
         "y_true": 0.5,
-        "prediction": 0.03726895008213952
+        "prediction": 0.03726895008213951
       },
       {
         "row_index": 87,
@@ -3530,7 +3521,7 @@
         "Year": 10,
         "fold_key": 935,
         "y_true": 0.152777778,
-        "prediction": 0.03726895008213952
+        "prediction": 0.03726895008213951
       }
     ],
     "NON_TEMPORAL_SAME_FEATURES": [
@@ -3541,7 +3532,7 @@
         "Year": 7,
         "fold_key": 206,
         "y_true": -0.019090644,
-        "prediction": 0.07561111837083899
+        "prediction": 0.075611118370839
       },
       {
         "row_index": 1,
@@ -3550,7 +3541,7 @@
         "Year": 7,
         "fold_key": 206,
         "y_true": -0.0360036,
-        "prediction": 0.07561111837083899
+        "prediction": 0.075611118370839
       },
       {
         "row_index": 2,
@@ -3559,7 +3550,7 @@
         "Year": 7,
         "fold_key": 206,
         "y_true": -0.118014184,
-        "prediction": 0.07561111837083899
+        "prediction": 0.075611118370839
       },
       {
         "row_index": 3,
@@ -3568,7 +3559,7 @@
         "Year": 7,
         "fold_key": 206,
         "y_true": 0.107894737,
-        "prediction": 0.07561111837083899
+        "prediction": 0.075611118370839
       },
       {
         "row_index": 4,
@@ -3577,7 +3568,7 @@
         "Year": 7,
         "fold_key": 206,
         "y_true": -0.010350776,
-        "prediction": 0.07561111837083899
+        "prediction": 0.075611118370839
       },
       {
         "row_index": 5,
@@ -3586,7 +3577,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.181768707,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 6,
@@ -3595,7 +3586,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.156716418,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 7,
@@ -3604,7 +3595,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.087878788,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 8,
@@ -3613,7 +3604,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.076244666,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 9,
@@ -3622,7 +3613,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.06440483,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 10,
@@ -3631,7 +3622,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.114398135,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 11,
@@ -3640,7 +3631,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.057575758,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 12,
@@ -3649,7 +3640,7 @@
         "Year": 8,
         "fold_key": 469,
         "y_true": -0.040639269,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 13,
@@ -3658,7 +3649,7 @@
         "Year": 8,
         "fold_key": 469,
         "y_true": 0.029187125,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 14,
@@ -3667,7 +3658,7 @@
         "Year": 8,
         "fold_key": 469,
         "y_true": 0.075,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 15,
@@ -3676,7 +3667,7 @@
         "Year": 8,
         "fold_key": 469,
         "y_true": -0.053058677,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 16,
@@ -3685,7 +3676,7 @@
         "Year": 8,
         "fold_key": 469,
         "y_true": -0.078827839,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 17,
@@ -3712,7 +3703,7 @@
         "Year": 8,
         "fold_key": 3132,
         "y_true": -0.060089165,
-        "prediction": -0.05210204738715709
+        "prediction": -0.052102047387157124
       },
       {
         "row_index": 20,
@@ -3739,7 +3730,7 @@
         "Year": 5,
         "fold_key": 206,
         "y_true": -0.098709452,
-        "prediction": 0.07561111837083899
+        "prediction": 0.075611118370839
       },
       {
         "row_index": 23,
@@ -3748,7 +3739,7 @@
         "Year": 5,
         "fold_key": 206,
         "y_true": -0.108949911,
-        "prediction": 0.07561111837083899
+        "prediction": 0.075611118370839
       },
       {
         "row_index": 24,
@@ -3757,7 +3748,7 @@
         "Year": 7,
         "fold_key": 469,
         "y_true": 0.114193548,
-        "prediction": 0.09063538039384661
+        "prediction": 0.09063538039384664
       },
       {
         "row_index": 25,
@@ -3766,7 +3757,7 @@
         "Year": 7,
         "fold_key": 703,
         "y_true": -0.104545455,
-        "prediction": -0.0074921973736785654
+        "prediction": -0.007492197373678613
       },
       {
         "row_index": 26,
@@ -3775,7 +3766,7 @@
         "Year": 7,
         "fold_key": 703,
         "y_true": 0.165909091,
-        "prediction": 0.07583942551884039
+        "prediction": 0.07583942551884042
       },
       {
         "row_index": 27,
@@ -3784,7 +3775,7 @@
         "Year": 7,
         "fold_key": 703,
         "y_true": 0.132284382,
-        "prediction": 0.030440002134559524
+        "prediction": 0.03044000213455952
       },
       {
         "row_index": 28,
@@ -3793,7 +3784,7 @@
         "Year": 7,
         "fold_key": 703,
         "y_true": 0.010695187,
-        "prediction": 0.07583942551884039
+        "prediction": 0.07583942551884042
       },
       {
         "row_index": 29,
@@ -3802,7 +3793,7 @@
         "Year": 7,
         "fold_key": 703,
         "y_true": 0.071867322,
-        "prediction": 0.07583942551884039
+        "prediction": 0.07583942551884042
       },
       {
         "row_index": 30,
@@ -3811,7 +3802,7 @@
         "Year": 8,
         "fold_key": 690,
         "y_true": 0.019047619,
-        "prediction": 0.08149063355276814
+        "prediction": 0.08149063355276816
       },
       {
         "row_index": 31,
@@ -3820,7 +3811,7 @@
         "Year": 8,
         "fold_key": 690,
         "y_true": 0.111742424,
-        "prediction": 0.08149063355276814
+        "prediction": 0.08149063355276816
       },
       {
         "row_index": 32,
@@ -3829,7 +3820,7 @@
         "Year": 8,
         "fold_key": 690,
         "y_true": -0.012096774,
-        "prediction": -0.04443739543463548
+        "prediction": -0.04443739543463545
       },
       {
         "row_index": 33,
@@ -3838,7 +3829,7 @@
         "Year": 8,
         "fold_key": 690,
         "y_true": 0.093137255,
-        "prediction": 0.08149063355276814
+        "prediction": 0.08149063355276816
       },
       {
         "row_index": 34,
@@ -3847,7 +3838,7 @@
         "Year": 9,
         "fold_key": 1470,
         "y_true": 0.094202899,
-        "prediction": 0.0762483031205861
+        "prediction": 0.07624830312058607
       },
       {
         "row_index": 35,
@@ -3856,7 +3847,7 @@
         "Year": 9,
         "fold_key": 1470,
         "y_true": 0.097424412,
-        "prediction": 0.0762483031205861
+        "prediction": 0.07624830312058607
       },
       {
         "row_index": 36,
@@ -3865,7 +3856,7 @@
         "Year": 9,
         "fold_key": 1470,
         "y_true": 0.114379085,
-        "prediction": 0.0762483031205861
+        "prediction": 0.07624830312058607
       },
       {
         "row_index": 37,
@@ -3874,7 +3865,7 @@
         "Year": 9,
         "fold_key": 1470,
         "y_true": 0.0,
-        "prediction": 0.0762483031205861
+        "prediction": 0.07624830312058607
       },
       {
         "row_index": 38,
@@ -3883,7 +3874,7 @@
         "Year": 9,
         "fold_key": 1470,
         "y_true": -0.037084399,
-        "prediction": 0.0762483031205861
+        "prediction": 0.07624830312058607
       },
       {
         "row_index": 39,
@@ -3892,7 +3883,7 @@
         "Year": 10,
         "fold_key": 2028,
         "y_true": 0.092885375,
-        "prediction": 0.07624830312058611
+        "prediction": 0.07624830312058609
       },
       {
         "row_index": 40,
@@ -3901,7 +3892,7 @@
         "Year": 10,
         "fold_key": 2028,
         "y_true": 0.092258065,
-        "prediction": 0.07624830312058611
+        "prediction": 0.07624830312058609
       },
       {
         "row_index": 41,
@@ -3910,7 +3901,7 @@
         "Year": 10,
         "fold_key": 2028,
         "y_true": 0.093877551,
-        "prediction": 0.07624830312058611
+        "prediction": 0.07624830312058609
       },
       {
         "row_index": 42,
@@ -3919,7 +3910,7 @@
         "Year": 10,
         "fold_key": 2028,
         "y_true": -0.000351865,
-        "prediction": 0.07624830312058611
+        "prediction": 0.07624830312058609
       },
       {
         "row_index": 43,
@@ -3928,7 +3919,7 @@
         "Year": 10,
         "fold_key": 2028,
         "y_true": -0.025918762,
-        "prediction": 0.07624830312058611
+        "prediction": 0.07624830312058609
       },
       {
         "row_index": 44,
@@ -4027,7 +4018,7 @@
         "Year": 7,
         "fold_key": 440,
         "y_true": 0.133333333,
-        "prediction": 0.07981353795819117
+        "prediction": 0.07981353795819118
       },
       {
         "row_index": 55,
@@ -4036,7 +4027,7 @@
         "Year": 7,
         "fold_key": 440,
         "y_true": -0.1,
-        "prediction": 0.07981353795819117
+        "prediction": 0.07981353795819118
       },
       {
         "row_index": 56,
@@ -4045,7 +4036,7 @@
         "Year": 7,
         "fold_key": 440,
         "y_true": 0.0,
-        "prediction": 0.07981353795819117
+        "prediction": 0.07981353795819118
       },
       {
         "row_index": 57,
@@ -4054,7 +4045,7 @@
         "Year": 7,
         "fold_key": 440,
         "y_true": -0.166666667,
-        "prediction": 0.07981353795819117
+        "prediction": 0.07981353795819118
       },
       {
         "row_index": 58,
@@ -4063,7 +4054,7 @@
         "Year": 7,
         "fold_key": 440,
         "y_true": -0.066666667,
-        "prediction": 0.07981353795819117
+        "prediction": 0.07981353795819118
       },
       {
         "row_index": 59,
@@ -4072,7 +4063,7 @@
         "Year": 7,
         "fold_key": 855,
         "y_true": -0.057142857,
-        "prediction": 0.07955167846018024
+        "prediction": 0.07955167846018027
       },
       {
         "row_index": 60,
@@ -4081,7 +4072,7 @@
         "Year": 7,
         "fold_key": 855,
         "y_true": -0.271428571,
-        "prediction": 0.07955167846018024
+        "prediction": 0.07955167846018027
       },
       {
         "row_index": 61,
@@ -4090,7 +4081,7 @@
         "Year": 7,
         "fold_key": 855,
         "y_true": 0.657142857,
-        "prediction": 0.07955167846018024
+        "prediction": 0.07955167846018027
       },
       {
         "row_index": 62,
@@ -4099,7 +4090,7 @@
         "Year": 7,
         "fold_key": 855,
         "y_true": 0.314285714,
-        "prediction": 0.07955167846018024
+        "prediction": 0.07955167846018027
       },
       {
         "row_index": 63,
@@ -4108,7 +4099,7 @@
         "Year": 7,
         "fold_key": 2563,
         "y_true": 0.857142857,
-        "prediction": 0.07496928583875141
+        "prediction": 0.0749692858387514
       },
       {
         "row_index": 64,
@@ -4117,7 +4108,7 @@
         "Year": 7,
         "fold_key": 2563,
         "y_true": 0.214285714,
-        "prediction": 0.07496928583875141
+        "prediction": 0.0749692858387514
       },
       {
         "row_index": 65,
@@ -4126,7 +4117,7 @@
         "Year": 7,
         "fold_key": 2563,
         "y_true": 0.5,
-        "prediction": 0.07496928583875141
+        "prediction": 0.0749692858387514
       },
       {
         "row_index": 66,
@@ -4135,7 +4126,7 @@
         "Year": 7,
         "fold_key": 2563,
         "y_true": 0.357142857,
-        "prediction": 0.07496928583875141
+        "prediction": 0.0749692858387514
       },
       {
         "row_index": 67,
@@ -4144,7 +4135,7 @@
         "Year": 7,
         "fold_key": 2563,
         "y_true": 0.071428571,
-        "prediction": 0.07496928583875141
+        "prediction": 0.0749692858387514
       },
       {
         "row_index": 68,
@@ -4198,7 +4189,7 @@
         "Year": 8,
         "fold_key": 638,
         "y_true": -0.333333333,
-        "prediction": 0.08024099836107959
+        "prediction": 0.08024099836107958
       },
       {
         "row_index": 74,
@@ -4207,7 +4198,7 @@
         "Year": 8,
         "fold_key": 638,
         "y_true": -0.055555556,
-        "prediction": 0.08024099836107959
+        "prediction": 0.08024099836107958
       },
       {
         "row_index": 75,
@@ -4216,7 +4207,7 @@
         "Year": 8,
         "fold_key": 638,
         "y_true": -0.166666667,
-        "prediction": 0.08024099836107959
+        "prediction": 0.08024099836107958
       },
       {
         "row_index": 76,
@@ -4225,7 +4216,7 @@
         "Year": 8,
         "fold_key": 690,
         "y_true": 0.051724138,
-        "prediction": 0.13639469396798845
+        "prediction": 0.13639469396798848
       },
       {
         "row_index": 77,
@@ -4234,7 +4225,7 @@
         "Year": 8,
         "fold_key": 1872,
         "y_true": -0.133333333,
-        "prediction": 0.08121082959235665
+        "prediction": 0.08121082959235666
       },
       {
         "row_index": 78,
@@ -4243,7 +4234,7 @@
         "Year": 8,
         "fold_key": 1872,
         "y_true": -0.1,
-        "prediction": 0.08121082959235665
+        "prediction": 0.08121082959235666
       },
       {
         "row_index": 79,
@@ -4252,7 +4243,7 @@
         "Year": 8,
         "fold_key": 1872,
         "y_true": 0.233333333,
-        "prediction": 0.08121082959235665
+        "prediction": 0.08121082959235666
       },
       {
         "row_index": 80,
@@ -4261,7 +4252,7 @@
         "Year": 8,
         "fold_key": 1872,
         "y_true": 0.066666667,
-        "prediction": 0.08121082959235665
+        "prediction": 0.08121082959235666
       },
       {
         "row_index": 81,
@@ -4279,7 +4270,7 @@
         "Year": 8,
         "fold_key": 3133,
         "y_true": 0.247619048,
-        "prediction": 0.08005048018875474
+        "prediction": 0.08005048018875477
       },
       {
         "row_index": 83,
@@ -4288,7 +4279,7 @@
         "Year": 8,
         "fold_key": 3133,
         "y_true": -0.201587302,
-        "prediction": 0.08005048018875474
+        "prediction": 0.08005048018875477
       },
       {
         "row_index": 84,
@@ -4297,7 +4288,7 @@
         "Year": 10,
         "fold_key": 935,
         "y_true": 0.027777778,
-        "prediction": 0.05743591545096313
+        "prediction": 0.057435915450963125
       },
       {
         "row_index": 85,
@@ -4306,7 +4297,7 @@
         "Year": 10,
         "fold_key": 935,
         "y_true": 0.126984127,
-        "prediction": 0.05743591545096313
+        "prediction": 0.057435915450963125
       },
       {
         "row_index": 86,
@@ -4315,7 +4306,7 @@
         "Year": 10,
         "fold_key": 935,
         "y_true": 0.5,
-        "prediction": 0.05743591545096313
+        "prediction": 0.057435915450963125
       },
       {
         "row_index": 87,
@@ -4324,7 +4315,7 @@
         "Year": 10,
         "fold_key": 935,
         "y_true": 0.152777778,
-        "prediction": 0.05743591545096313
+        "prediction": 0.057435915450963125
       }
     ]
   },
