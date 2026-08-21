@@ -41,7 +41,6 @@ PRE_OUTCOME_LOG_TYPES = {"Checkin", "CheckinRetry", "Lesson"}
 
 
 def circular_shift_logs_per_user(logs: pd.DataFrame, seed: int) -> pd.DataFrame:
-    """Negative control: circular-shift event order within each UserId, keep Timestamps."""
     rng = np.random.default_rng(seed)
     parts = []
     for _, g in logs.groupby("UserId", sort=False):
@@ -62,14 +61,6 @@ def _build_numeric_columns(base_columns: List[str], prefixes: Tuple[str, ...]) -
 
 
 class TemporalFeatureBuilder(FeatureBuilder):
-    """Fold-local temporal (or shuffled) features from pre-outcome interaction logs.
-
-    Lookup hierarchy for each row:
-      1. (QuestionConstructId, Year) exact key
-      2. QuestionConstructId only
-      3. global fallback (fold-local mean)
-    """
-
     KEY_COLUMNS = ["TreatmentLessonConstructId", "QuestionConstructId", "Year"]
     LOOKUP_KEY_COLUMNS = ["QuestionConstructId", "Year"]
     BASE_COLUMNS = [
@@ -245,11 +236,6 @@ class TemporalFeatureBuilder(FeatureBuilder):
         return pd.DataFrame(records, index=rows.index)[self.NUMERIC_COLUMNS]
 
     def coverage_report(self, rows: pd.DataFrame) -> pd.DataFrame:
-        """Per-row coverage level after fit: key_year | question_only | global.
-
-        Required for the paper: with leave-one-treatment-construct-out, most test
-        rows have no (QuestionConstructId, Year) in train and fall back to global.
-        """
         if self.key_features_ is None and self.question_fallback_ is None:
             raise RuntimeError(f"{self.name}.coverage_report called before fit()")
 
@@ -292,8 +278,6 @@ def default_feature_builders(seed: int = 42) -> Dict[str, FeatureBuilder]:
 
 
 class TemporalPrimary(Method):
-    """Primary temporal method. Locked — do not retune after seeing results."""
-
     name = "TEMPORAL_PRIMARY"
     requires_features = True
     feature_variant = "temporal"

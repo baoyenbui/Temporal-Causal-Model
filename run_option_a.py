@@ -147,6 +147,27 @@ def collect_coverage_by_fold(
     return table
 
 
+def build_metrics_export(combined_results: pd.DataFrame) -> dict:
+    export = {}
+    for _, row in combined_results.iterrows():
+        method = row["method"]
+        export[method] = row.drop(labels=["method"]).to_dict()
+    return export
+
+
+def build_predictions_export(bench: pd.DataFrame, predictions_all: pd.DataFrame, target: str) -> dict:
+    base = bench[["TreatmentLessonConstructId", "QuestionConstructId", "Year"]].reset_index(drop=True).copy()
+    base.insert(0, "row_index", base.index)
+    base["fold_key"] = bench[FOLD_KEY].reset_index(drop=True)
+    base["y_true"] = bench[target].reset_index(drop=True)
+    export = {}
+    for method in predictions_all.columns:
+        method_df = base.copy()
+        method_df["prediction"] = predictions_all[method].reset_index(drop=True)
+        export[method] = method_df.to_dict(orient="records")
+    return export
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Option A construct-level CATE benchmark")
     parser.add_argument("--data-dir", default="data")
@@ -255,6 +276,9 @@ def main() -> int:
     print(f"\n--- Paired MAE differences across all {n_methods} methods (cluster-bootstrap CI) ---")
     print(pairwise_ci.to_string(index=False))
 
+    metrics_export = build_metrics_export(combined_results)
+    predictions_export = build_predictions_export(bench, predictions_all, args.target)
+
     manifest = build_combined_manifest(baseline_result, temporal_result, shuffled_result, predictions_all)
     print(
         f"\nCombined manifest: n_logs_in={manifest['n_logs_in']}, n_logs_used={manifest['n_logs_used']}, "
@@ -270,7 +294,9 @@ def main() -> int:
             json.dump(
                 {
                     "manifest": manifest,
+                    "metrics": metrics_export,
                     "pairwise_ci": pairwise_ci.to_dict(orient="records"),
+                    "predictions": predictions_export,
                     "coverage_by_fold": coverage_table.to_dict(orient="records"),
                 },
                 handle,
