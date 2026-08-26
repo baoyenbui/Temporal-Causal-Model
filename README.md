@@ -1,77 +1,68 @@
-# Temporal Causal Learning Model in Student Interaction Sequences
+```markdown
+# Temporal Alignment for Construct-Level Treatment-Effect Prediction
 
-## Core Idea
+This repository contains the implementation and frozen experimental evidence for evaluating the predictive value of temporal alignment in construct-level treatment-effect prediction using the CausalEdu benchmark.
 
-We model student learning as a temporal sequence of dependent interactions and learn causal structure over time.
+## Research Question
 
-Layer 1 - Temporal Representation:
-Convert raw logs into ordered learning windows with behavioral features and student clustering.
+> Under leakage-safe leave-one-treatment-construct-out (LOTO) evaluation, does preserving the original within-student temporal alignment improve out-of-fold mean absolute error (MAE) relative to a matched circular-shift control?
 
-Layer 2 - Causal Structure Learning:
-Construct system-level time series and learn lagged causal relations using PCMCI with stability selection and latent proxy variables.
+The study compares a **Temporal** representation with a **Matched Circular-Shift (MCS)** representation under the same feature architecture, preprocessing, and Random Forest estimator. Three feature-free baselines are also evaluated.
 
-Layer 3 - Counterfactual Reasoning:
-Apply interventions on the learned causal graph to simulate temporal effects of changes in key learning variables.
+## Experimental Protocol
 
----
+- **Dataset:** CausalEdu
+- **Evaluation units:** 88 treatment–question–year units
+- **Evaluation:** 15 treatment-construct LOTO folds
+- **Primary metric:** MAE
+- **Secondary metrics:** RMSE, Spearman correlation, sign agreement
+- **Cluster bootstrap:** 2,000 replicates, seed 42
+- **Circular-shift seed:** 43
+- **Random Forest:** 200 trees, seed 42
 
-## Project Structure
+Outcome-related `Checkout` and `CheckoutRetry` interactions are excluded before feature construction to prevent outcome leakage.
 
-Repository is organized into modular components for data processing, causal discovery, baseline comparison, and counterfactual analysis.
+## Frozen Experimental Evidence
 
-```
-project/
-│── data/                     # raw datasets
-│
-│── src/                      # core implementation modules
-│   ├── data_loader.py
-│   ├── preprocessing.ipynb
-│   ├── causal_discovery.py
-│   ├── baseline.py
-│   ├── cf.py
-│   ├── evaluation.py
-│   └── utils.py
-│
-│── main.py                   # run pipeline
-│── run_baseline.py           # run baseline models
-│── run_cf.py                 # run counterfactual analysis
-│── requirements.txt
-│── README.md
+The final experiment is frozen at commit:
+
+```text
+f4e0dc7a1ca3f8b6fbcbce922802eb2ccb865b4d
 ```
 
----
+The frozen manifest records the experimental configuration, input counts and hashes, fold assignments, model settings, out-of-fold predictions, lookup coverage, and pairwise statistical results.
+
+**Manifest:**  
+https://github.com/baoyenbui/Temporal-Causal-Model/blob/f4e0dc7a1ca3f8b6fbcbce922802eb2ccb865b4d/final_manifest.json
+
+## Data Availability
+
+The study uses the CausalEdu benchmark released by Eedi and Microsoft Research.
+
+**Official repository:**  
+https://github.com/Eedi/CausalEdu
+
+The dataset is not redistributed in this repository. Please follow the conditions specified by the dataset authors.
 
 ## Installation
----
 
-### 1. Create environment
-
-```
+```bash
 python -m venv venv
-```
-
-Activate environment:
-
-```
-# Windows
-venv\Scripts\activate
-
-# Linux / Mac
-source venv/bin/activate
-```
-
----
-
-### 2. Install dependencies
-
-```
+source venv/bin/activate   # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
----
+## Usage
 
-### 3. Optional (DYNOTEARS)
+Run the evaluation:
 
+```bash
+python run_option_a.py
 ```
-pip install git+https://github.com/sessions-lab/dynotears.git
+
+Run tests:
+
+```bash
+pytest
+```
 ```
