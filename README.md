@@ -25,7 +25,6 @@ Outcome-related `Checkout` and `CheckoutRetry` interactions are excluded before 
 
 The final experiment is frozen at commit:
 
-```text
 f4e0dc7a1ca3f8b6fbcbce922802eb2ccb865b4d
 
 The frozen manifest records the experimental configuration, input counts and hashes, fold assignments, model settings, out-of-fold predictions, lookup coverage, and pairwise statistical results.
