@@ -1,4 +1,3 @@
-```markdown
 # Temporal Alignment for Construct-Level Treatment-Effect Prediction
 
 This repository contains the implementation and frozen experimental evidence for evaluating the predictive value of temporal alignment in construct-level treatment-effect prediction using the CausalEdu benchmark.
@@ -28,7 +27,6 @@ The final experiment is frozen at commit:
 
 ```text
 f4e0dc7a1ca3f8b6fbcbce922802eb2ccb865b4d
-```
 
 The frozen manifest records the experimental configuration, input counts and hashes, fold assignments, model settings, out-of-fold predictions, lookup coverage, and pairwise statistical results.
 
